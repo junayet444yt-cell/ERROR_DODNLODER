@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: error-downloader
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MAX_CONCURRENT_JOBS
+        value: "2"
+      - key: JOB_TIMEOUT_MS
+        value: "600000"
+      - key: MAX_FILESIZE
+        value: "800M"
+      # Optional, for YouTube/Instagram/Facebook on datacenter IPs (see README):
+      # - key: YTDLP_PROXY
+      #   sync: false
