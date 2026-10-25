@@ -239,10 +239,7 @@ const runningCount = () => [...jobs.values()].filter(j => j.status === "running"
 function formatArgs(q) {
   if (q === "audio") return ["-x", "--audio-format", "mp3", "--audio-quality", "0", "-f", "ba/b"];
   const h = /^\d{3,4}$/.test(q) ? `[height<=${q}]` : "";
-  // Pair video-only streams with audio-only streams; fall back to muxed A/V formats.
-  // Every fallback retains the selected height cap when the user chose a quality.
-  const fmt = `bv[vcodec^=avc1]${h}+ba[ext=m4a]/bv[vcodec^=avc1]${h}+ba/bv${h}+ba/b[ext=mp4]${h}/b${h}`;
-  return ["-f", fmt, "--merge-output-format", "mp4"];
+  return ["-f", `bv*${h}[vcodec^=avc1]+ba[ext=m4a]/bv*${h}+ba/b${h}[ext=mp4]/b${h}/b`, "--merge-output-format", "mp4"];
 }
 
 function cleanJob(id) {
