@@ -10,7 +10,7 @@
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;font-family:"Chakra Petch",system-ui,sans-serif;color:var(--txt);
 background:radial-gradient(900px 500px at 10% -10%,#7a0b1f 0,transparent 60%),radial-gradient(800px 500px at 100% 0,#7a3200 0,transparent 55%),var(--bg)}
-main{max-width:760px;margin:0 auto;padding:28px 16px 60px}
+main{max-width:760px;margin:0 auto;padding:28px 16px 60px;position:relative;z-index:1}
 h1,h2{font-family:Creepster,cursive;font-weight:400;letter-spacing:.04em}
 h1{font-size:clamp(40px,9vw,68px);margin:8px 0 4px;background:linear-gradient(90deg,var(--a),var(--b),var(--c));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 30px #ff1e3c55}
 p.sub{color:var(--mut);margin:0 0 22px}
@@ -36,12 +36,17 @@ video{width:100%;max-height:70vh;background:#000;display:block}
 .note{margin-top:34px;font-size:13px;color:var(--mut);line-height:1.6}
 .note a{color:var(--c)}
 .size{color:var(--mut);font-size:14px}
+#wallpaperCanvas{position:fixed;inset:-90px;width:calc(100vw + 180px);height:calc(100vh + 180px);z-index:0;display:none;opacity:.55;filter:blur(90px) saturate(1.3);transform:scale(1.12);pointer-events:none}
+.wallpaper-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 20px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.wallpaper-tools .close{font-family:inherit;font-size:15px;letter-spacing:0}
+.wallpaper-tools .size{flex:1 1 100%}
 #lock{position:fixed;inset:0;background:var(--bg);display:none;place-items:center;padding:20px}
 #lock div{max-width:340px;width:100%}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
 </style>
 </head>
 <body>
+<canvas id="wallpaperCanvas" width="8" height="5" aria-hidden="true"></canvas>
 <main>
   <h1>Devil Video Downloader</h1>
   <p class="sub">Paste any video link. The video plays below, and you can download it.</p>
@@ -53,6 +58,12 @@ video{width:100%;max-height:70vh;background:#000;display:block}
     <button class="go" id="go">Get Video</button>
   </div>
   <input id="ref" type="url" placeholder="Embedded on (optional): page link where this video is shown" autocomplete="off" aria-label="Embedded on page link" style="margin-top:10px;padding-right:16px">
+  <section class="wallpaper-tools" aria-label="Abstract live background">
+    <label class="close" for="wallpaperFile" style="cursor:pointer">Choose a background video</label>
+    <input id="wallpaperFile" type="file" accept="video/*,.mp4,.webm,.mov" hidden>
+    <button class="close" id="wallpaperToggle" type="button" disabled>Start muted abstract background</button>
+    <span class="size" id="wallpaperStatus">The video stays in this browser. It is muted and reduced to a blurred color field; it is not uploaded.</span>
+  </section>
   <div id="msg" role="status"></div>
   <section id="res">
     <video id="vid" controls playsinline></video>
@@ -100,6 +111,42 @@ async function login(){
 }
 $('lgo').onclick=login; $('pw').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 fetch('/api/status').then(r=>r.json()).then(s=>{if(s.need&&!s.ok)$('lock').style.display='grid';if(s.contact){const a=document.createElement('a');a.href='mailto:'+s.contact;a.textContent=s.contact;$('contact').append(' Contact / removal requests: ',a)}});
+let wallpaperVideo=null,wallpaperUrl='',wallpaperActive=false,wallpaperFrame=0;
+const wallpaperCanvas=$('wallpaperCanvas'),wallpaperCtx=wallpaperCanvas.getContext('2d',{alpha:false});
+function stopWallpaper(){
+  wallpaperActive=false;cancelAnimationFrame(wallpaperFrame);wallpaperCanvas.style.display='none';
+  if(wallpaperVideo)wallpaperVideo.pause();
+  $('wallpaperToggle').textContent='Start muted abstract background';
+}
+function drawWallpaper(){
+  if(!wallpaperActive)return;
+  if(wallpaperVideo&&wallpaperVideo.readyState>=2)wallpaperCtx.drawImage(wallpaperVideo,0,0,wallpaperCanvas.width,wallpaperCanvas.height);
+  wallpaperFrame=requestAnimationFrame(drawWallpaper);
+}
+$('wallpaperFile').addEventListener('change',()=>{
+  stopWallpaper();
+  if(wallpaperVideo){wallpaperVideo.removeAttribute('src');wallpaperVideo.load()}
+  if(wallpaperUrl)URL.revokeObjectURL(wallpaperUrl);
+  const file=$('wallpaperFile').files&&$('wallpaperFile').files[0];
+  if(!file){$('wallpaperToggle').disabled=true;return}
+  wallpaperUrl=URL.createObjectURL(file);
+  wallpaperVideo=document.createElement('video');
+  wallpaperVideo.muted=true;wallpaperVideo.loop=true;wallpaperVideo.playsInline=true;wallpaperVideo.preload='auto';wallpaperVideo.src=wallpaperUrl;
+  $('wallpaperToggle').disabled=false;
+  $('wallpaperStatus').textContent='Selected: '+file.name+'. Audio is muted; only a tiny blurred color field is shown, and the file stays in this browser.';
+});
+$('wallpaperToggle').addEventListener('click',async()=>{
+  if(wallpaperActive){stopWallpaper();$('wallpaperStatus').textContent='Abstract background stopped.';return}
+  if(!wallpaperVideo)return;
+  wallpaperVideo.muted=true;wallpaperVideo.loop=true;
+  try{
+    await wallpaperVideo.play();wallpaperActive=true;wallpaperCanvas.style.display='block';
+    $('wallpaperToggle').textContent='Stop abstract background';
+    $('wallpaperStatus').textContent='Muted abstract background is running while this page stays open.';
+    drawWallpaper();
+  }catch(e){$('wallpaperStatus').textContent='This browser could not play that local video. Choose another video file.'}
+});
+window.addEventListener('beforeunload',()=>{stopWallpaper();if(wallpaperUrl)URL.revokeObjectURL(wallpaperUrl)});
 </script>
 </body>
 </html>
