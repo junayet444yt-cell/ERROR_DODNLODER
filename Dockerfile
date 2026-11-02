@@ -10,4 +10,3 @@ USER app
 ENV PORT=10000 PYTHONUNBUFFERED=1
 # one worker on purpose: the app keeps its file list in memory
 CMD gunicorn app:app --bind 0.0.0.0:${PORT} --workers 1 --threads 8 --timeout 900
-

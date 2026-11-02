@@ -38,4 +38,3 @@ PUBLIC SITE ADVICE
 - You are responsible for what people download through your server. Keep the footer notice,
   set CONTACT_EMAIL, and remove complaints quickly.
 - Update yt-dlp now and then (redeploy rebuilds it) because sites change often.
-

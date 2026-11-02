@@ -60,6 +60,22 @@ def security_headers(r):
     return r
 
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Always return JSON for API routes so the frontend never sees HTML error pages."""
+    if request.path.startswith("/api/"):
+        code = getattr(e, "code", 500)
+        if not isinstance(code, int) or code < 400:
+            code = 500
+        msg = str(e)[:300] if not isinstance(e, (SystemExit, KeyboardInterrupt)) else "Server error"
+        # Avoid leaking internal paths in production
+        if "yt_dlp" in msg or "Traceback" in msg:
+            msg = "Download failed. The site may be blocking this server or the video is unavailable."
+        return jsonify(error=msg), code
+    # Non-API routes keep default HTML behavior
+    raise e
+
+
 def need_auth(f):
     @wraps(f)
     def w(*a, **k):
@@ -338,10 +354,8 @@ def fetch():
             msg = re.sub(r"\s+", " ", msg)[:200]
             if "does not pass filter" in msg or "duration" in msg:
                 msg = "This video is too long (limit %d minutes) or is a live stream." % MAX_MINUTES
-            elif "403" in msg or "forbidden" in msg.lower():
-                msg = "The source site refused this server request (HTTP 403). Use its official download option or a direct public video URL it permits."
-            elif "blocked" in msg.lower():
-                msg = "The source site does not allow requests from this server. Use its official download option or a direct public video URL it permits."
+            elif "403" in msg or "blocked" in msg:
+                msg += " | Tip: fill the 'Embedded on' box with the page where this video is shown."
             return jsonify(error="Could not get the video: " + msg), 400
         if str(info.get("extractor_key", "")).lower().startswith(BLOCKED_EXTRACTORS):
             drop(vid)
@@ -375,4 +389,3 @@ def media(vid):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-

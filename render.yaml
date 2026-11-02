@@ -11,5 +11,5 @@ services:
         value: "60"
       - key: RATE_MAX
         value: "8"
-      # Keep this service private by setting ACCESS_PASSWORD in Render.
-      # Optional: CONTACT_EMAIL, KEEP_MINUTES, MAX_JOBS, MAX_CACHE_MB, USE_COOKIES=1
+      # Private site: add ACCESS_PASSWORD in the Render dashboard. Public site: leave it out.
+      # Optional: CONTACT_EMAIL, PROXY_URL, KEEP_MINUTES, MAX_JOBS, MAX_CACHE_MB, USE_COOKIES=1
