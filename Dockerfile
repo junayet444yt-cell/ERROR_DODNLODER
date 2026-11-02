@@ -1,8 +1,13 @@
 FROM python:3.12-slim
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -u 1000 app
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-ENV PORT=10000
-CMD gunicorn app:app --bind 0.0.0.0:${PORT} --workers 1 --threads 6 --timeout 600
+COPY --chown=app:app . .
+USER app
+ENV PORT=10000 PYTHONUNBUFFERED=1
+# one worker on purpose: the app keeps its file list in memory
+CMD gunicorn app:app --bind 0.0.0.0:${PORT} --workers 1 --threads 8 --timeout 900
+
