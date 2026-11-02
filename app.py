@@ -4,9 +4,9 @@ from functools import wraps
 from flask import Flask, request, jsonify, send_file, session, send_from_directory
 import yt_dlp
 
-PASSWORD = os.environ.get("ACCESS_PASSWORD", "")          # খালি = সবার জন্য খোলা (public)
-MAX_MB = int(os.environ.get("MAX_MB", "500"))              # সর্বোচ্চ ভিডিও সাইজ
-TTL = int(os.environ.get("KEEP_MINUTES", "30")) * 60       # কতক্ষণ ফাইল রাখবে
+PASSWORD = os.environ.get("ACCESS_PASSWORD", "")          # empty = public
+MAX_MB = int(os.environ.get("MAX_MB", "500"))              # max video size
+TTL = int(os.environ.get("KEEP_MINUTES", "30")) * 60       # how long files are kept
 COOKIES = os.path.join(os.path.dirname(__file__), "cookies.txt")
 CACHE = "/tmp/vcache"
 os.makedirs(CACHE, exist_ok=True)
@@ -23,7 +23,7 @@ def need_auth(f):
     @wraps(f)
     def w(*a, **k):
         if PASSWORD and not session.get("ok"):
-            return jsonify(error="লগইন করতে হবে"), 401
+            return jsonify(error="Login required"), 401
         return f(*a, **k)
     return w
 
@@ -67,7 +67,7 @@ def login():
         session.permanent = True
         session["ok"] = True
         return jsonify(ok=True)
-    return jsonify(error="পাসওয়ার্ড ভুল"), 403
+    return jsonify(error="Wrong password"), 403
 
 
 @app.route("/api/fetch", methods=["POST"])
@@ -76,7 +76,7 @@ def fetch():
     cleanup()
     url = ((request.json or {}).get("url") or "").strip()
     if not url_is_safe(url):
-        return jsonify(error="লিংকটা ঠিক নেই। http:// বা https:// দিয়ে শুরু হওয়া পুরো লিংক দিন।"), 400
+        return jsonify(error="Invalid link. Paste the full link starting with http:// or https://"), 400
     vid = uuid.uuid4().hex[:12]
     opts = {
         "outtmpl": os.path.join(CACHE, vid + ".%(ext)s"),
@@ -97,10 +97,10 @@ def fetch():
             info = y.extract_info(url, download=True)
     except Exception as e:
         msg = str(e).replace("ERROR: ", "")[:300]
-        return jsonify(error="ভিডিও আনা যায়নি: " + msg), 400
+        return jsonify(error="Could not get the video: " + msg), 400
     found = [f for f in glob.glob(os.path.join(CACHE, vid + ".*")) if not f.endswith((".part", ".ytdl"))]
     if not found:
-        return jsonify(error="ভিডিও ফাইল পাওয়া যায়নি (সাইজ বেশি হতে পারে)।"), 400
+        return jsonify(error="Video file not found (it may be too large)."), 400
     path = found[0]
     title = (info.get("title") or "video")[:100]
     with lock:
@@ -114,7 +114,7 @@ def fetch():
 def media(vid):
     item = files.get(vid)
     if not item or not os.path.exists(item["path"]):
-        return "ফাইলের মেয়াদ শেষ, আবার লিংক দিন।", 404
+        return "File expired. Paste the link again.", 404
     ext = os.path.splitext(item["path"])[1]
     safe = "".join(c for c in item["title"] if c not in '\\/:*?"<>|').strip() or "video"
     return send_file(item["path"], mimetype=mimetypes.guess_type(item["path"])[0] or "video/mp4",

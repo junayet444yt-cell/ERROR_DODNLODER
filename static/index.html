@@ -1,36 +1,38 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ভিডিও ডাউনলোডার</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap">
+<title>Devil Video Downloader</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Metal+Mania&family=Chakra+Petch:wght@400;600&display=swap">
 <style>
-:root{--bg:#140a2e;--card:#21124a;--line:#3a2a73;--txt:#f6f1ff;--mut:#b4a8dd;--a:#ff3d81;--b:#ffb400;--c:#22d3ee}
+:root{--bg:#0d0206;--card:#1c0710;--line:#5a1226;--txt:#fff1ea;--mut:#d9a08f;--a:#ff1e3c;--b:#ff8a00;--c:#ffd43b}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;font-family:"Hind Siliguri",system-ui,sans-serif;color:var(--txt);
-background:radial-gradient(900px 500px at 10% -10%,#5b1fa8 0,transparent 60%),radial-gradient(800px 500px at 100% 0,#0b6a86 0,transparent 55%),var(--bg)}
+body{margin:0;min-height:100vh;font-family:"Chakra Petch",system-ui,sans-serif;color:var(--txt);
+background:radial-gradient(900px 500px at 10% -10%,#7a0b1f 0,transparent 60%),radial-gradient(800px 500px at 100% 0,#7a3200 0,transparent 55%),var(--bg)}
 main{max-width:760px;margin:0 auto;padding:28px 16px 60px}
-h1{font-size:clamp(28px,6vw,44px);margin:8px 0 4px;background:linear-gradient(90deg,var(--a),var(--b),var(--c));-webkit-background-clip:text;background-clip:text;color:transparent}
+h1,h2{font-family:Creepster,cursive;font-weight:400;letter-spacing:.04em}
+h1{font-size:clamp(40px,9vw,68px);margin:8px 0 4px;background:linear-gradient(90deg,var(--a),var(--b),var(--c));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 30px #ff1e3c55}
 p.sub{color:var(--mut);margin:0 0 22px}
 .box{display:flex;gap:10px;flex-wrap:wrap}
 .field{position:relative;flex:1 1 280px}
-input{width:100%;padding:15px 44px 15px 16px;font:inherit;color:var(--txt);background:var(--card);border:2px solid var(--line);border-radius:14px;outline:none}
-input:focus{border-color:var(--c)}
-.x{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:50%;background:#3a2a73;color:#fff;font-size:16px;cursor:pointer;display:none}
-button.go{padding:15px 26px;font:inherit;font-weight:700;color:#1a0a2e;background:linear-gradient(90deg,var(--b),var(--a));border:0;border-radius:14px;cursor:pointer}
+input{width:100%;padding:15px 44px 15px 16px;font:inherit;color:var(--txt);background:var(--card);border:2px solid var(--line);border-radius:12px;outline:none}
+input:focus{border-color:var(--b)}
+.x{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:50%;background:var(--line);color:#fff;font-size:16px;cursor:pointer;display:none}
+button.go,.dl,.close{font-family:"Metal Mania",cursive;letter-spacing:.05em}
+button.go{padding:15px 28px;font-size:20px;color:#fff;background:linear-gradient(90deg,var(--a),var(--b));border:0;border-radius:12px;cursor:pointer;text-shadow:0 1px 6px #0008}
 button:disabled{opacity:.6;cursor:wait}
 button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--c);outline-offset:2px}
 #msg{margin:16px 0;min-height:24px;color:var(--mut)}
-#msg.err{color:#ff8fa3}
-.spin{display:inline-block;width:16px;height:16px;border:3px solid var(--line);border-top-color:var(--c);border-radius:50%;animation:s 0.8s linear infinite;vertical-align:-3px;margin-right:8px}
+#msg.err{color:#ff7a8a}
+.spin{display:inline-block;width:16px;height:16px;border:3px solid var(--line);border-top-color:var(--b);border-radius:50%;animation:s .8s linear infinite;vertical-align:-3px;margin-right:8px}
 @keyframes s{to{transform:rotate(360deg)}}
-#res{display:none;background:var(--card);border:2px solid var(--line);border-radius:18px;overflow:hidden}
+#res{display:none;background:var(--card);border:2px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 0 40px #ff1e3c22}
 video{width:100%;max-height:70vh;background:#000;display:block}
 .info{padding:14px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.info h2{flex:1 1 100%;margin:0;font-size:17px;font-weight:600;word-break:break-word}
-.dl{padding:12px 22px;font-weight:700;color:#06222a;background:linear-gradient(90deg,var(--c),#7cf0c5);border-radius:12px;text-decoration:none}
-.close{padding:12px 18px;font:inherit;color:var(--txt);background:transparent;border:2px solid var(--line);border-radius:12px;cursor:pointer}
+.info h2{flex:1 1 100%;margin:0;font-size:24px;word-break:break-word}
+.dl{padding:11px 22px;font-size:19px;color:#1a0300;background:linear-gradient(90deg,var(--c),var(--b));border-radius:12px;text-decoration:none}
+.close{padding:11px 18px;font-size:19px;color:var(--txt);background:transparent;border:2px solid var(--line);border-radius:12px;cursor:pointer}
 .size{color:var(--mut);font-size:14px}
 #lock{position:fixed;inset:0;background:var(--bg);display:none;place-items:center;padding:20px}
 #lock div{max-width:340px;width:100%}
@@ -39,31 +41,31 @@ video{width:100%;max-height:70vh;background:#000;display:block}
 </head>
 <body>
 <main>
-  <h1>ভিডিও ডাউনলোডার</h1>
-  <p class="sub">যেকোনো ভিডিওর লিংক পেস্ট করুন। নিচে ভিডিও চলবে, আর ডাউনলোডও করা যাবে।</p>
+  <h1>Devil Video Downloader</h1>
+  <p class="sub">Paste any video link. The video plays below, and you can download it.</p>
   <div class="box">
     <div class="field">
-      <input id="url" type="url" placeholder="ভিডিও লিংক এখানে পেস্ট করুন" autocomplete="off" aria-label="ভিডিও লিংক">
-      <button class="x" id="clr" aria-label="লিংক মুছুন">✕</button>
+      <input id="url" type="url" placeholder="Paste video link here" autocomplete="off" aria-label="Video link">
+      <button class="x" id="clr" aria-label="Clear link">✕</button>
     </div>
-    <button class="go" id="go">ভিডিও আনুন</button>
+    <button class="go" id="go">Get Video</button>
   </div>
   <div id="msg" role="status"></div>
   <section id="res">
     <video id="vid" controls playsinline></video>
     <div class="info">
       <h2 id="ttl"></h2>
-      <a class="dl" id="dl" href="#">ডাউনলোড করুন</a>
-      <button class="close" id="cls">ভিডিও বন্ধ করুন</button>
+      <a class="dl" id="dl" href="#">Download</a>
+      <button class="close" id="cls">Close Video</button>
       <span class="size" id="sz"></span>
     </div>
   </section>
 </main>
 <div id="lock"><div>
-  <h1>পাসওয়ার্ড দিন</h1>
-  <input id="pw" type="password" placeholder="পাসওয়ার্ড" style="padding-right:16px">
-  <p id="lerr" style="color:#ff8fa3;min-height:22px"></p>
-  <button class="go" id="lgo" style="width:100%">ঢুকুন</button>
+  <h1>Password</h1>
+  <input id="pw" type="password" placeholder="Enter password" style="padding-right:16px">
+  <p id="lerr" style="color:#ff7a8a;min-height:22px"></p>
+  <button class="go" id="lgo" style="width:100%">Enter</button>
 </div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -74,12 +76,12 @@ clr.onclick=()=>{url.value='';clr.style.display='none';url.focus()};
 function closeVideo(){const v=$('vid');v.pause();v.removeAttribute('src');v.load();$('res').style.display='none'}
 $('cls').onclick=closeVideo;
 async function run(){
-  const u=url.value.trim(); if(!u){say('আগে একটা লিংক দিন',true);return}
-  closeVideo(); go.disabled=true; say('ভিডিও আনা হচ্ছে… বড় ভিডিওতে কিছুক্ষণ লাগতে পারে',false,true);
+  const u=url.value.trim(); if(!u){say('Paste a link first',true);return}
+  closeVideo(); go.disabled=true; say('Getting the video… big videos can take a while',false,true);
   try{
     const r=await fetch('/api/fetch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})});
     if(r.status===401){$('lock').style.display='grid';say('');return}
-    const d=await r.json(); if(!r.ok) throw new Error(d.error||'কিছু একটা ভুল হয়েছে');
+    const d=await r.json(); if(!r.ok) throw new Error(d.error||'Something went wrong');
     $('vid').src='/media/'+d.id; if(d.thumbnail) $('vid').poster=d.thumbnail;
     $('ttl').textContent=d.title; $('dl').href='/media/'+d.id+'?dl=1';
     $('sz').textContent=(d.size/1048576).toFixed(1)+' MB';
@@ -90,7 +92,7 @@ async function run(){
 go.onclick=run; url.addEventListener('keydown',e=>{if(e.key==='Enter')run()});
 async function login(){
   const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('pw').value})});
-  if(r.ok){$('lock').style.display='none'}else{$('lerr').textContent='পাসওয়ার্ড ভুল'}
+  if(r.ok){$('lock').style.display='none'}else{$('lerr').textContent='Wrong password'}
 }
 $('lgo').onclick=login; $('pw').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 fetch('/api/status').then(r=>r.json()).then(s=>{if(s.need&&!s.ok)$('lock').style.display='grid'});
