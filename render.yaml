@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: video-downloader
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: MAX_MB
+        value: "300"
+      - key: MAX_MINUTES
+        value: "60"
+      - key: RATE_MAX
+        value: "8"
+      # Keep this service private by setting ACCESS_PASSWORD in Render.
+      # Optional: CONTACT_EMAIL, KEEP_MINUTES, MAX_JOBS, MAX_CACHE_MB, USE_COOKIES=1
