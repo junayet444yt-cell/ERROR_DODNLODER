@@ -147,6 +147,9 @@ button.pbtn.main{background:linear-gradient(135deg,var(--c),var(--b))}
 .rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.32);transform:scale(0);animation:rip .6s ease-out forwards;pointer-events:none}
 @keyframes rip{to{transform:scale(1);opacity:0}}
 button:active:not(:disabled),.dl:active{transform:scale(.97)}
+.alts{flex:1 1 100%;display:none;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
+.alts button{padding:5px 12px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.06);color:var(--c);font:600 13px "Chakra Petch",system-ui,sans-serif;cursor:pointer;transition:background .2s}
+.alts button:hover{background:rgba(255,255,255,.13)}
 /* progress bar */
 .bar{height:3px;border-radius:3px;margin-top:14px;background:rgba(255,255,255,.06);overflow:hidden;opacity:0;transition:opacity .3s}
 .bar.on{opacity:1}
@@ -203,6 +206,7 @@ button:active:not(:disabled),.dl:active{transform:scale(.97)}
       <a class="dl" id="dl" href="#">Download</a>
       <button class="close" id="cls">Close Video</button>
       <span class="size" id="sz"></span>
+      <div class="alts" id="alts"></div>
     </div>
   </section>
   <p class="note rv" style="--i:4"><span id="rule">Only download videos you own or have permission to save.</span> Videos are deleted from the server after a short time.<span id="contact"></span></p>
@@ -269,6 +273,28 @@ function showRes(d){
   $('ttl').textContent=d.title; $('dl').style.display=''; $('dl').href='/media/'+d.id+'?dl=1';
   $('sz').textContent=(d.size/1048576).toFixed(1)+' MB';
   $('res').style.display='block';
+  const box=$('alts');box.textContent='';
+  if(d.others&&d.others.length){
+    box.style.display='flex';
+    box.append('Wrong video? Other videos found on this page:');
+    d.others.forEach(o=>{
+      const b=document.createElement('button');b.type='button';
+      const t=Math.round(o.dur||0);b.textContent=o.dur?(Math.floor(t/60)+':'+String(t%60).padStart(2,'0')):'?';
+      b.onclick=()=>pickAlt(d.id,o.n);box.appendChild(b);
+    });
+  }else box.style.display='none';
+}
+async function pickAlt(id,n){
+  closeVideo();go.disabled=true;$('bar').classList.add('on');say('Getting that video…',false,true);
+  try{
+    const r=await fetch('/api/alt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,n})});
+    let d={};try{d=await r.json()}catch(e){throw new Error('Something went wrong')}
+    if(!r.ok)throw new Error(d.error||'Something went wrong');
+    showRes(d);say('');
+    store.set('evdLast',JSON.stringify({id:d.id,title:d.title,thumbnail:d.thumbnail,size:d.size,others:d.others,t:Date.now()}));
+    $('res').scrollIntoView({behavior:'smooth'});
+  }catch(e){say(e.message,true)}
+  finally{go.disabled=false;$('bar').classList.remove('on')}
 }
 async function run(){
   const u=url.value.trim(); if(!u){say('Paste a link first',true);return}
@@ -281,7 +307,7 @@ async function run(){
     let d={}; try{d=await r.json()}catch(e){throw new Error(r.status===502||r.status===504?'The server is waking up or busy. Wait 30 seconds and try again.':'Something went wrong')}
     if(!r.ok) throw new Error(d.error||'Something went wrong');
     showRes(d); say('');
-    store.set('evdLast',JSON.stringify({id:d.id,title:d.title,thumbnail:d.thumbnail,size:d.size,t:Date.now()}));
+    store.set('evdLast',JSON.stringify({id:d.id,title:d.title,thumbnail:d.thumbnail,size:d.size,others:d.others,t:Date.now()}));
     $('res').scrollIntoView({behavior:'smooth'});
   }catch(e){say(e.message,true)}
   finally{clearInterval(timer);go.disabled=false;$('bar').classList.remove('on')}

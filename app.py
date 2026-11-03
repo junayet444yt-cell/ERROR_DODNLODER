@@ -380,7 +380,7 @@ def probe_duration(src, referer=None):
         return None
 
 
-def rank_candidates(cands):
+def rank_candidates(cands, with_dur=False):
     """A page often holds an ad, a preview or a trailer next to the real video. Longest video first,
     and links that look like ads/previews go last."""
     cands = [c for c in cands if not (BLOCKED and is_blocked(c[0]))][:6]
@@ -390,7 +390,7 @@ def rank_candidates(cands):
         durs = list(ex.map(lambda c: probe_duration(c[0], c[1]), cands))
     scored = [(c, d) for c, d in zip(cands, durs)]
     scored.sort(key=lambda cd: (-(cd[1] or 0), 1 if AD_WORDS.search(cd[0][0]) else 0))
-    return [c for c, d in scored]
+    return [(c, d) for c, d in scored] if with_dur else [c for c, d in scored]
 
 
 def grab_candidate(direct, ref, vid):
@@ -486,6 +486,52 @@ def login():
     return jsonify(error="Wrong password"), 403
 
 
+def reply(vid, info, alts):
+    found = [f for f in glob.glob(os.path.join(CACHE, vid + ".*")) if not f.endswith((".part", ".ytdl"))]
+    if not found:
+        drop(vid)
+        return jsonify(error="Video file not found (it may be too large - limit %d MB)." % MAX_MB), 400
+    path = max(found, key=os.path.getsize)
+    title = (info.get("title") or "video")[:100]
+    mine = info.get("duration") or probe_duration(path)
+    others = []
+    for i, (u, r, d) in enumerate(alts[:6]):  # other videos found on the same page (not the one we are returning)
+        if mine and d and abs(d - mine) < 2:
+            continue
+        others.append({"n": i, "dur": d})
+    with lock:
+        files[vid] = {"path": path, "title": title, "ts": time.time(), "alts": alts[:6]}
+    return jsonify(id=vid, url="/media/" + vid, title=title, thumbnail=info.get("thumbnail"),
+                   duration=mine, size=os.path.getsize(path), others=others)
+
+
+@app.route("/api/alt", methods=["POST"])
+@need_auth
+def alt():
+    body = request.get_json(silent=True) or {}
+    item = files.get(str(body.get("id") or ""))
+    try:
+        u, r, d = item["alts"][int(body.get("n"))]
+    except Exception:
+        return jsonify(error="That choice expired. Paste the link again."), 400
+    if not rate_ok("fetch"):
+        return jsonify(error="Too many requests. Please wait a few minutes and try again."), 429
+    if cache_size_mb() > MAX_CACHE_MB:
+        return jsonify(error="Server storage is full right now. Try again in a few minutes."), 503
+    if not slots.acquire(blocking=False):
+        return jsonify(error="Server is busy with other downloads. Try again in a minute."), 503
+    try:
+        vid = uuid.uuid4().hex[:12]
+        try:
+            info = grab_candidate(u, r, vid)
+        except Exception as e:
+            drop(vid)
+            return jsonify(error="Could not get that video: " + re.sub(r"\s+", " ", str(e).replace("ERROR: ", ""))[:160]), 400
+        return reply(vid, info, item["alts"])
+    finally:
+        slots.release()
+
+
 @app.route("/api/fetch", methods=["POST"])
 @app.route("/api/extract", methods=["POST"])
 @need_auth
@@ -512,7 +558,7 @@ def fetch():
         return jsonify(error="Server is busy with other downloads. Try again in a minute."), 503
     try:
         vid = uuid.uuid4().hex[:12]
-        info, err = None, None
+        info, err, alts = None, None, []
         if is_x(url) and not os.path.exists(COOKIES):  # no login cookies: the lookup services are the best first try
             try:
                 info = x_download(url, vid)
@@ -530,7 +576,9 @@ def fetch():
                 err = err or e
         if info is None:  # fallback: dig the real video link out of the page
             try:
-                for direct, ref in rank_candidates(find_media(url, ref_in or None)):
+                ranked = rank_candidates(find_media(url, ref_in or None), with_dur=True)
+                alts = [(c[0], c[1], d) for c, d in ranked]
+                for (direct, ref), _d in ranked:
                     drop(vid)  # clear any half-written file from the previous try
                     try:
                         info = grab_candidate(direct, ref, vid)
@@ -545,18 +593,17 @@ def fetch():
             try:
                 got = [f for f in glob.glob(os.path.join(CACHE, vid + ".*")) if not f.endswith((".part", ".ytdl"))]
                 d0 = probe_duration(max(got, key=os.path.getsize)) if got else None
-                if d0 is not None and d0 <= 120:
-                    ranked = rank_candidates(find_media(url, ref_in or None))
-                    if ranked:
-                        best = ranked[0]
-                        d1 = probe_duration(best[0], best[1])
-                        if d1 and d1 >= d0 + 30 and d1 >= d0 * 1.5:
+                ranked = rank_candidates(find_media(url, ref_in or None), with_dur=True)
+                alts = [(c[0], c[1], d) for c, d in ranked]
+                if d0 is not None and d0 <= 120 and ranked:
+                    (bu, br), d1 = ranked[0]
+                    if d1 and d1 >= d0 + 30 and d1 >= d0 * 1.5:
+                        drop(vid)
+                        try:
+                            info = grab_candidate(bu, br, vid)
+                        except Exception:
                             drop(vid)
-                            try:
-                                info = grab_candidate(best[0], best[1], vid)
-                            except Exception:
-                                drop(vid)
-                                info = run_ydl(url, vid, {"Referer": ref_in} if ref_in else None)  # keep the first result
+                            info = run_ydl(url, vid, {"Referer": ref_in} if ref_in else None)  # keep the first result
             except Exception:
                 pass
         if info is None:
@@ -575,16 +622,7 @@ def fetch():
         if BLOCKED and str(info.get("extractor_key", "")).lower().startswith(BLOCKED_EXTRACTORS):
             drop(vid)
             return jsonify(error=BLOCK_MSG), 403
-        found = [f for f in glob.glob(os.path.join(CACHE, vid + ".*")) if not f.endswith((".part", ".ytdl"))]
-        if not found:
-            drop(vid)
-            return jsonify(error="Video file not found (it may be too large - limit %d MB)." % MAX_MB), 400
-        path = max(found, key=os.path.getsize)
-        title = (info.get("title") or "video")[:100]
-        with lock:
-            files[vid] = {"path": path, "title": title, "ts": time.time()}
-        return jsonify(id=vid, url="/media/" + vid, title=title, thumbnail=info.get("thumbnail"),
-                       duration=info.get("duration"), size=os.path.getsize(path))
+        return reply(vid, info, alts)
     finally:
         slots.release()
 
