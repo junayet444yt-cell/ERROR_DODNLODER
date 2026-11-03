@@ -295,7 +295,7 @@ def run_ydl(url, vid, headers=None):
     if PROXY:
         opts["proxy"] = PROXY
     host = (urlparse(url).hostname or "").lower()
-    if os.path.exists(COOKIES) and (USE_COOKIES or "instagram.com" in host):  # Instagram nearly always needs login cookies
+    if os.path.exists(COOKIES) and (USE_COOKIES or any(d in host for d in ("instagram.com", "twitter.com", "x.com"))):  # Instagram and Twitter/X often need login cookies
         opts["cookiefile"] = COOKIES
     with yt_dlp.YoutubeDL(opts) as y:
         return y.extract_info(url, download=True)
@@ -364,6 +364,7 @@ def fetch():
         return jsonify(error=BLOCK_MSG), 403
     if not rate_ok("fetch"):
         return jsonify(error="Too many requests. Please wait a few minutes and try again."), 429
+    url = re.sub(r"^(https?://)(?:www\.|mobile\.|m\.)?(?:fxtwitter|vxtwitter|fixupx|fixvx|twittpr)\.com", r"\1x.com", url, flags=re.I)
     ref_in = str(body.get("referer") or "").strip()
     if ref_in and (len(ref_in) > 2000 or not url_is_safe(ref_in)):
         ref_in = ""
@@ -399,6 +400,8 @@ def fetch():
             msg = re.sub(r"\s+", " ", msg)[:200]
             if "does not pass filter" in msg or "duration" in msg:
                 msg = "This video is too long (limit %d minutes) or is a live stream." % MAX_MINUTES
+            elif re.search(r"(twitter|x)\.com", url.lower()) and re.search(r"login|cookie|guest|sensitive|nsfw|age|protected|not authorized|no video|authentication", msg, re.I):
+                msg = "Twitter/X wants a login for this post (sensitive or age-restricted content, or the guest limit). Add your cookies (COOKIES_B64 setting or cookies.txt) and try again. Posts without a video cannot be downloaded."
             elif "instagram" in url.lower() and re.search(r"login|cookie|rate-limit|not available|empty media|private", msg, re.I):
                 msg = "Instagram wants a login. Add your cookies (COOKIES_B64 setting or cookies.txt) and try again. Private accounts need the cookies of an account that follows them."
             elif "403" in msg or "blocked" in msg:

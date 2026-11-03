@@ -3,7 +3,7 @@ VIDEO DOWNLOADER - public-ready version
 
 WHAT IT DOES
 Paste a video link -> the video appears and plays -> Download button saves it.
-Works with most sites (TikTok, Twitter/X, embed players, direct .mp4/.m3u8 links ...).
+Works with most sites (TikTok, Twitter/X (x.com and twitter.com links), embed players, direct .mp4/.m3u8 links ...).
 Instagram videos/reels work (add cookies, see below). YouTube and Facebook are blocked (BLOCKED_SITES setting).
 Gear button (bottom right) > "Add background video" plays a video from your own device behind the page (not uploaded anywhere).
 Background: gear button (bottom right) = blur slider, darkness and floating embers.
