@@ -2,9 +2,10 @@
 ERROR HUB DOWNLODER - public-ready version.
 Paste a video link -> the server fetches it -> the video plays in the page and can be downloaded.
 """
-import os, re, json, glob, time, uuid, base64, socket, secrets, hmac, hashlib, ipaddress, mimetypes, threading
+import os, re, json, glob, shutil, subprocess, time, uuid, base64, socket, secrets, hmac, hashlib, ipaddress, mimetypes, threading
 from functools import wraps
 from urllib.parse import urlparse, urljoin
+from concurrent.futures import ThreadPoolExecutor
 
 import yt_dlp
 from flask import Flask, request, jsonify, send_file, session, send_from_directory
@@ -360,12 +361,57 @@ def x_download(url, vid):
     return {"title": title, "thumbnail": thumb, "duration": dur, "extractor_key": "Twitter"}
 
 
+AD_WORDS = re.compile(r"preview|trailer|teaser|promo|banner|sample|advert|/ads?/|[._/-]ads?[._/-]|vast|pre-?roll|intro|thumb|loop|short", re.I)
+
+
+def probe_duration(src, referer=None):
+    """Length in seconds of a video file or link (needs ffprobe), or None when it cannot be measured."""
+    exe = shutil.which("ffprobe")
+    if not exe:
+        return None
+    cmd = [exe, "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0"]
+    if src.startswith("http"):
+        cmd += ["-protocol_whitelist", "http,https,tcp,tls,crypto", "-headers",
+                "User-Agent: %s\r\n%s" % (UA, ("Referer: %s\r\n" % referer) if referer else "")]
+    try:
+        out = subprocess.run(cmd + [src], capture_output=True, text=True, timeout=25).stdout.strip().splitlines()
+        return float(out[0]) if out and out[0] not in ("", "N/A") else None
+    except Exception:
+        return None
+
+
+def rank_candidates(cands):
+    """A page often holds an ad, a preview or a trailer next to the real video. Longest video first,
+    and links that look like ads/previews go last."""
+    cands = [c for c in cands if not (BLOCKED and is_blocked(c[0]))][:6]
+    if not cands:
+        return []
+    with ThreadPoolExecutor(max_workers=len(cands)) as ex:
+        durs = list(ex.map(lambda c: probe_duration(c[0], c[1]), cands))
+    scored = [(c, d) for c, d in zip(cands, durs)]
+    scored.sort(key=lambda cd: (-(cd[1] or 0), 1 if AD_WORDS.search(cd[0][0]) else 0))
+    return [c for c, d in scored]
+
+
+def grab_candidate(direct, ref, vid):
+    p = urlparse(ref)
+    if ".m3u8" not in direct.lower():
+        try:
+            download_direct(direct, vid, ref)
+            return {"title": (urlparse(ref).path.strip("/").split("/")[-1] or "video").replace("-", " ")[:80],
+                    "thumbnail": None, "duration": None, "extractor_key": "Direct"}
+        except Exception:
+            drop(vid)
+    return run_ydl(direct, vid, {"Referer": ref, "Origin": p.scheme + "://" + p.netloc})
+
+
 def run_ydl(url, vid, headers=None):
     opts = {
         "outtmpl": os.path.join(CACHE, vid + ".%(ext)s"),
         "format": "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b",
         "merge_output_format": "mp4",
         "noplaylist": True,
+        "playlistend": 1,  # a page with several videos: never download them all
         "match_filter": yt_dlp.utils.match_filter_func("!is_live & duration<=?%d" % (MAX_MINUTES * 60)),
         "quiet": True,
         "no_warnings": True,
@@ -484,26 +530,35 @@ def fetch():
                 err = err or e
         if info is None:  # fallback: dig the real video link out of the page
             try:
-                for direct, ref in find_media(url, ref_in or None):
+                for direct, ref in rank_candidates(find_media(url, ref_in or None)):
                     drop(vid)  # clear any half-written file from the previous try
-                    if BLOCKED and is_blocked(direct):
-                        continue
-                    p = urlparse(ref)
-                    if ".m3u8" not in direct.lower():
-                        try:
-                            download_direct(direct, vid, ref)
-                            info = {"title": (urlparse(ref).path.strip("/").split("/")[-1] or "video").replace("-", " ")[:80],
-                                    "thumbnail": None, "duration": None, "extractor_key": "Direct"}
-                            break
-                        except Exception as e4:
-                            err = e4
                     try:
-                        info = run_ydl(direct, vid, {"Referer": ref, "Origin": p.scheme + "://" + p.netloc})
+                        info = grab_candidate(direct, ref, vid)
                         break
                     except Exception as e3:
                         err = e3
             except Exception as e2:
                 err = e2
+        elif str(info.get("extractor_key", "")).lower() in ("generic", "html5"):
+            # yt-dlp took the first video it saw on the page, which may be an ad or a short preview.
+            # If the page holds a clearly longer video, use that one instead.
+            try:
+                got = [f for f in glob.glob(os.path.join(CACHE, vid + ".*")) if not f.endswith((".part", ".ytdl"))]
+                d0 = probe_duration(max(got, key=os.path.getsize)) if got else None
+                if d0 is not None and d0 <= 120:
+                    ranked = rank_candidates(find_media(url, ref_in or None))
+                    if ranked:
+                        best = ranked[0]
+                        d1 = probe_duration(best[0], best[1])
+                        if d1 and d1 >= d0 + 30 and d1 >= d0 * 1.5:
+                            drop(vid)
+                            try:
+                                info = grab_candidate(best[0], best[1], vid)
+                            except Exception:
+                                drop(vid)
+                                info = run_ydl(url, vid, {"Referer": ref_in} if ref_in else None)  # keep the first result
+            except Exception:
+                pass
         if info is None:
             drop(vid)
             msg = str(err or "no video found on this page").replace("ERROR: ", "")
@@ -524,7 +579,7 @@ def fetch():
         if not found:
             drop(vid)
             return jsonify(error="Video file not found (it may be too large - limit %d MB)." % MAX_MB), 400
-        path = found[0]
+        path = max(found, key=os.path.getsize)
         title = (info.get("title") or "video")[:100]
         with lock:
             files[vid] = {"path": path, "title": title, "ts": time.time()}

@@ -101,8 +101,8 @@ video{width:100%;max-height:70vh;background:#000;display:block}
 @property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
 :root{--bg:#060103;--txt:#f1e4dd;
 --card:hsl(calc(340 + var(--h)) 55% 6%);--line:hsl(calc(345 + var(--h)) 40% 17%);--mut:hsl(calc(14 + var(--h)) 30% 68%);
---a:hsl(calc(352 + var(--h)) 72% 47%);--b:hsl(calc(30 + var(--h)) 78% 46%);--c:hsl(calc(44 + var(--h)) 62% 64%);
---d1:hsl(calc(350 + var(--h)) 62% 15%);--d2:hsl(calc(28 + var(--h)) 70% 13%);--d3:hsl(calc(325 + var(--h)) 58% 10%);--d4:hsl(calc(340 + var(--h)) 45% 11%)}
+--a:hsl(calc(352 + var(--h)) 58% 44%);--b:hsl(calc(30 + var(--h)) 62% 42%);--c:hsl(calc(44 + var(--h)) 48% 60%);
+--d1:hsl(calc(350 + var(--h)) 50% 13%);--d2:hsl(calc(28 + var(--h)) 52% 11%);--d3:hsl(calc(325 + var(--h)) 46% 9%);--d4:hsl(calc(340 + var(--h)) 45% 11%)}
 html{background:#060103;scroll-behavior:smooth}
 html,body{overscroll-behavior-y:contain}
 ::selection{background:color-mix(in srgb,var(--a) 45%,transparent);color:#fff}
@@ -346,10 +346,10 @@ applyBg();
 /* ---- slow automatic colour change (all colours drift around the colour wheel) ---- */
 let hueT=+store.get('hueT',0),hueTimer=0,hue=0;
 const root=document.documentElement,themeMeta=document.querySelector('meta[name=theme-color]');
-const HUE_PERIOD=80; /* seconds for one full there-and-back sweep */
+const HUE_PERIOD=100; /* seconds for one trip around ALL colours */
 function setHue(){root.style.setProperty('--h',hue.toFixed(2));themeMeta.content='hsl('+((340+hue+360)%360).toFixed(0)+',55%,5%)'}
-/* the colours sway smoothly between violet/wine and warm orange (never green/cyan), updated once per second in tiny steps */
-function stepHue(){hueT+=1;hue=-20+60*Math.sin(2*Math.PI*hueT/HUE_PERIOD);setHue()}
+/* all colours, one tiny step per second; the colours themselves are kept soft and dark so they never glare */
+function stepHue(){hueT+=1;hue=(hueT*360/HUE_PERIOD)%360;setHue()}
 function startHue(){stopHue();hueTimer=setInterval(()=>{if(!vid.paused&&!vid.ended)return;stepHue()},1000)}
 function stopHue(){clearInterval(hueTimer);hueTimer=0;store.set('hueT',hueT)}
 $('rgb').checked=store.get('bgRgb',reduce?'0':'1')==='1';
