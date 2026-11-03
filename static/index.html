@@ -3,48 +3,79 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0206">
 <title>Devil Video Downloader</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Metal+Mania&family=Chakra+Petch:wght@400;600&display=swap">
 <style>
 :root{--bg:#0d0206;--card:#1c0710;--line:#5a1226;--txt:#fff1ea;--mut:#d9a08f;--a:#ff1e3c;--b:#ff8a00;--c:#ffd43b}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;font-family:"Chakra Petch",system-ui,sans-serif;color:var(--txt);
-background:radial-gradient(900px 500px at 10% -10%,#7a0b1f 0,transparent 60%),radial-gradient(800px 500px at 100% 0,#7a3200 0,transparent 55%),var(--bg)}
-main{max-width:760px;margin:0 auto;padding:28px 16px 60px}
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;font-family:"Chakra Petch",system-ui,sans-serif;color:var(--txt)}
+/* live background: NOT blurred by default, you control the blur with the slider */
+#bg{position:fixed;inset:0;z-index:-1;pointer-events:none;
+background:radial-gradient(900px 500px at 10% -10%,#7a0b1f 0,transparent 60%),radial-gradient(800px 500px at 100% 0,#7a3200 0,transparent 55%),radial-gradient(700px 400px at 50% 110%,#4a0a2a 0,transparent 60%),var(--bg);
+animation:glow 9s ease-in-out infinite alternate}
+#bg.blur{transform:scale(1.08)}
+#fx{position:absolute;inset:0;width:100%;height:100%}
+@keyframes glow{from{filter:var(--bf,none) hue-rotate(0deg)}to{filter:var(--bf,none) hue-rotate(-14deg)}}
+main{position:relative;max-width:780px;margin:0 auto;padding:30px 16px 80px}
 h1,h2{font-family:Creepster,cursive;font-weight:400;letter-spacing:.04em}
-h1{font-size:clamp(40px,9vw,68px);margin:8px 0 4px;background:linear-gradient(90deg,var(--a),var(--b),var(--c));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 30px #ff1e3c55}
-p.sub{color:var(--mut);margin:0 0 22px}
+h1{font-size:clamp(42px,10vw,74px);margin:6px 0 2px;line-height:1.05;background:linear-gradient(90deg,var(--a),var(--b),var(--c),var(--b),var(--a));background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+filter:drop-shadow(0 0 18px #ff1e3c88);animation:shine 6s linear infinite}
+@keyframes shine{to{background-position:200% center}}
+p.sub{color:var(--mut);margin:0 0 24px;font-size:17px}
 .box{display:flex;gap:10px;flex-wrap:wrap}
 .field{position:relative;flex:1 1 280px}
-input{width:100%;padding:15px 44px 15px 16px;font:inherit;color:var(--txt);background:var(--card);border:2px solid var(--line);border-radius:12px;outline:none}
-input:focus{border-color:var(--b)}
+input[type=url],input[type=password]{width:100%;padding:15px 44px 15px 16px;font:inherit;color:var(--txt);background:#1c0710cc;border:2px solid var(--line);border-radius:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+input[type=url]:focus,input[type=password]:focus{border-color:var(--b);box-shadow:0 0 0 4px #ff8a0030,0 0 28px #ff1e3c40}
 .x{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:50%;background:var(--line);color:#fff;font-size:16px;cursor:pointer;display:none}
-button.go,.dl,.close{font-family:"Metal Mania",cursive;letter-spacing:.05em}
-button.go{padding:15px 28px;font-size:20px;color:#fff;background:linear-gradient(90deg,var(--a),var(--b));border:0;border-radius:12px;cursor:pointer;text-shadow:0 1px 6px #0008}
+button.go,.dl,.close,button.add{font-family:"Metal Mania",cursive;letter-spacing:.05em}
+button.go{position:relative;overflow:hidden;padding:15px 28px;font-size:20px;color:#fff;background:linear-gradient(90deg,var(--a),var(--b));border:0;border-radius:14px;cursor:pointer;text-shadow:0 1px 6px #0008;box-shadow:0 6px 24px #ff1e3c55;transition:transform .15s,box-shadow .2s}
+button.go::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,#fff5,transparent);transform:skewX(-20deg);transition:left .5s}
+button.go:hover:not(:disabled)::after{left:130%}
+button.go:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px #ff1e3c88}
+button.go:active:not(:disabled){transform:translateY(0)}
+button.add{margin-top:10px;width:100%;padding:14px 18px;font-size:19px;color:var(--c);background:#1c071099;border:2px dashed #ff8a0088;border-radius:14px;cursor:pointer;transition:background .2s,border-color .2s,box-shadow .2s}
+button.add:hover,body.drag button.add{background:#3a0d1c;border-color:var(--c);box-shadow:0 0 26px #ffd43b33}
 button:disabled{opacity:.6;cursor:wait}
-button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+details{margin-top:12px;color:var(--mut)}
+summary{cursor:pointer;font-size:14px;padding:4px 0}
+details input{margin-top:8px;padding-right:16px}
 #msg{margin:16px 0;min-height:24px;color:var(--mut)}
 #msg.err{color:#ff7a8a}
 .spin{display:inline-block;width:16px;height:16px;border:3px solid var(--line);border-top-color:var(--b);border-radius:50%;animation:s .8s linear infinite;vertical-align:-3px;margin-right:8px}
 @keyframes s{to{transform:rotate(360deg)}}
-#res{display:none;background:var(--card);border:2px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 0 40px #ff1e3c22}
+#res{display:none;background:#1c0710e6;border:2px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 0 50px #ff1e3c30,0 20px 60px #000a;animation:pop .35s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
 video{width:100%;max-height:70vh;background:#000;display:block}
 .info{padding:14px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .info h2{flex:1 1 100%;margin:0;font-size:24px;word-break:break-word}
-.dl{padding:11px 22px;font-size:19px;color:#1a0300;background:linear-gradient(90deg,var(--c),var(--b));border-radius:12px;text-decoration:none}
-.close{padding:11px 18px;font-size:19px;color:var(--txt);background:transparent;border:2px solid var(--line);border-radius:12px;cursor:pointer}
+.dl{display:inline-block;padding:11px 22px;font-size:19px;color:#1a0300;background:linear-gradient(90deg,var(--c),var(--b));border-radius:12px;text-decoration:none;box-shadow:0 4px 18px #ff8a0044;transition:transform .15s}
+.dl:hover{transform:translateY(-2px)}
+.close{padding:11px 18px;font-size:19px;color:var(--txt);background:transparent;border:2px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .2s}
+.close:hover{border-color:var(--a)}
 .note{margin-top:34px;font-size:13px;color:var(--mut);line-height:1.6}
 .note a{color:var(--c)}
 .size{color:var(--mut);font-size:14px}
-#lock{position:fixed;inset:0;background:var(--bg);display:none;place-items:center;padding:20px}
+/* background settings */
+#gear{position:fixed;right:14px;bottom:14px;width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:#1c0710ee;color:var(--c);font-size:21px;cursor:pointer;z-index:5;transition:transform .3s,border-color .2s}
+#gear:hover{transform:rotate(60deg);border-color:var(--b)}
+#panel{position:fixed;right:14px;bottom:70px;width:min(280px,calc(100vw - 28px));padding:16px;background:#1c0710f2;border:2px solid var(--line);border-radius:16px;z-index:5;display:none;box-shadow:0 10px 40px #000a}
+#panel h3{margin:0 0 12px;font-family:"Metal Mania",cursive;font-weight:400;font-size:20px;color:var(--c)}
+#panel label{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-top:10px}
+#panel input[type=range]{width:100%;accent-color:var(--b)}
+#panel .row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:14px;color:var(--mut)}
+#lock{position:fixed;inset:0;background:var(--bg);display:none;place-items:center;padding:20px;z-index:9}
 #lock div{max-width:340px;width:100%}
-@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+@media (prefers-reduced-motion:reduce){.spin,h1,#bg,#res{animation:none}}
 </style>
 </head>
 <body>
+<div id="bg"><canvas id="fx"></canvas></div>
 <main>
   <h1>Devil Video Downloader</h1>
-  <p class="sub">Paste any video link. The video plays below, and you can download it.</p>
+  <p class="sub">Paste a video link or add a video from your device. It plays below, and you can download it.</p>
   <div class="box">
     <div class="field">
       <input id="url" type="url" placeholder="Paste video link here" autocomplete="off" aria-label="Video link">
@@ -52,7 +83,12 @@ video{width:100%;max-height:70vh;background:#000;display:block}
     </div>
     <button class="go" id="go">Get Video</button>
   </div>
-  <input id="ref" type="url" placeholder="Embedded on (optional): page link where this video is shown" autocomplete="off" aria-label="Embedded on page link" style="margin-top:10px;padding-right:16px">
+  <button class="add" id="pick" type="button">＋ Add Video from this device</button>
+  <input id="file" type="file" accept="video/*,.mkv,.mov,.m4v,.3gp" hidden>
+  <details>
+    <summary>Video not loading (403 / blocked)?</summary>
+    <input id="ref" type="url" placeholder="Embedded on: page link where this video is shown" autocomplete="off" aria-label="Embedded on page link">
+  </details>
   <div id="msg" role="status"></div>
   <section id="res">
     <video id="vid" controls playsinline></video>
@@ -63,8 +99,19 @@ video{width:100%;max-height:70vh;background:#000;display:block}
       <span class="size" id="sz"></span>
     </div>
   </section>
-  <p class="note">Only download videos you own or have permission to save. YouTube, Facebook and Instagram links are not supported. Videos are deleted from the server after a short time.<span id="contact"></span></p>
+  <p class="note"><span id="rule">Only download videos you own or have permission to save.</span> Videos are deleted from the server after a short time.<span id="contact"></span></p>
 </main>
+
+<button id="gear" aria-label="Background settings" aria-expanded="false">⚙</button>
+<div id="panel" role="dialog" aria-label="Background settings">
+  <h3>Background</h3>
+  <label for="blur"><span>Blur</span><span id="blv">0</span></label>
+  <input id="blur" type="range" min="0" max="24" step="1" value="0">
+  <label for="dim"><span>Darkness</span><span id="dmv">0</span></label>
+  <input id="dim" type="range" min="0" max="80" step="5" value="0">
+  <div class="row"><span>Floating embers</span><input id="emb" type="checkbox" checked style="accent-color:#ff8a00;width:20px;height:20px"></div>
+</div>
+
 <div id="lock"><div>
   <h1>Password</h1>
   <input id="pw" type="password" placeholder="Enter password" style="padding-right:16px">
@@ -73,30 +120,60 @@ video{width:100%;max-height:70vh;background:#000;display:block}
 </div></div>
 <script>
 const $=id=>document.getElementById(id);
-const url=$('url'),msg=$('msg'),go=$('go'),clr=$('clr');
+const url=$('url'),msg=$('msg'),go=$('go'),clr=$('clr'),vid=$('vid');
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+let timer=null,localUrl=null;
+
 function say(t,err,spin){msg.className=err?'err':'';msg.textContent='';if(spin){const s=document.createElement('span');s.className='spin';msg.appendChild(s)}msg.appendChild(document.createTextNode(t||''))}
 url.addEventListener('input',()=>clr.style.display=url.value?'block':'none');
 clr.onclick=()=>{url.value='';clr.style.display='none';url.focus()};
-function closeVideo(){const v=$('vid');v.pause();v.removeAttribute('src');v.load();$('res').style.display='none'}
-$('cls').onclick=closeVideo;
+
+function closeVideo(){
+  vid.pause();vid.removeAttribute('src');vid.removeAttribute('poster');vid.load();
+  if(localUrl){URL.revokeObjectURL(localUrl);localUrl=null}
+  $('res').style.display='none';
+}
+$('cls').onclick=()=>{closeVideo();say('')};
+
+vid.addEventListener('error',()=>{
+  if(!vid.getAttribute('src'))return;
+  say(localUrl?"This video can't be played by your browser (format not supported).":"The browser can't play this format. Use the Download button instead.",true);
+});
+
+/* ---- add a video from the device (nothing is uploaded, it plays right here) ---- */
+function playLocal(f){
+  if(!(f.type||'').startsWith('video/')&&!/\.(mp4|mkv|webm|mov|avi|m4v|3gp|ogv)$/i.test(f.name)){say('That file is not a video.',true);return}
+  closeVideo();say('');
+  localUrl=URL.createObjectURL(f);vid.src=localUrl;
+  $('ttl').textContent=f.name;$('dl').style.display='none';
+  $('sz').textContent=(f.size/1048576).toFixed(1)+' MB';
+  $('res').style.display='block';$('res').scrollIntoView({behavior:'smooth'});
+  vid.play().catch(()=>{});
+}
+$('pick').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files[0];if(f)playLocal(f);e.target.value=''};
+addEventListener('dragover',e=>{e.preventDefault();document.body.classList.add('drag')});
+addEventListener('dragleave',e=>{if(!e.relatedTarget)document.body.classList.remove('drag')});
+addEventListener('drop',e=>{e.preventDefault();document.body.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)playLocal(f)});
+
+/* ---- link downloader ---- */
 async function run(){
   const u=url.value.trim(); if(!u){say('Paste a link first',true);return}
-  closeVideo(); go.disabled=true; say('Getting the video… big videos can take a while',false,true);
+  closeVideo(); go.disabled=true;
+  let sec=0; const tick=()=>say('Getting the video… '+sec+'s (big videos can take a while)',false,true);
+  tick(); timer=setInterval(()=>{sec++;tick()},1000);
   try{
     const r=await fetch('/api/fetch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u,referer:$('ref').value.trim()})});
     if(r.status===401){$('lock').style.display='grid';say('');return}
-    const text=await r.text();
-    let d;
-    try{d=JSON.parse(text)}catch(_){
-      throw new Error(r.status>=500?'Server error or timeout (big videos can hit host limits). Try a shorter clip or run the app locally.':'Unexpected server response. Try again.');
-    }
+    let d={}; try{d=await r.json()}catch(e){throw new Error(r.status===502||r.status===504?'The server is waking up or busy. Wait 30 seconds and try again.':'Something went wrong')}
     if(!r.ok) throw new Error(d.error||'Something went wrong');
-    $('vid').src='/media/'+d.id; if(d.thumbnail) $('vid').poster=d.thumbnail;
-    $('ttl').textContent=d.title; $('dl').href='/media/'+d.id+'?dl=1';
+    vid.src='/media/'+d.id; if(d.thumbnail) vid.poster=d.thumbnail;
+    $('ttl').textContent=d.title; $('dl').style.display=''; $('dl').href='/media/'+d.id+'?dl=1';
     $('sz').textContent=(d.size/1048576).toFixed(1)+' MB';
     $('res').style.display='block'; say('');
     $('res').scrollIntoView({behavior:'smooth'});
-  }catch(e){say(e.message,true)} finally{go.disabled=false}
+  }catch(e){say(e.message,true)}
+  finally{clearInterval(timer);go.disabled=false}
 }
 go.onclick=run; url.addEventListener('keydown',e=>{if(e.key==='Enter')run()});
 async function login(){
@@ -104,7 +181,50 @@ async function login(){
   if(r.ok){$('lock').style.display='none'}else{$('lerr').textContent='Wrong password'}
 }
 $('lgo').onclick=login; $('pw').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
-fetch('/api/status').then(r=>r.json()).then(s=>{if(s.need&&!s.ok)$('lock').style.display='grid';if(s.contact){const a=document.createElement('a');a.href='mailto:'+s.contact;a.textContent=s.contact;$('contact').append(' Contact / removal requests: ',a)}});
+fetch('/api/status').then(r=>r.json()).then(s=>{
+  if(s.need&&!s.ok)$('lock').style.display='grid';
+  if(s.blocked&&s.blocked.length)$('rule').textContent+=' '+s.blocked.join(', ')+' links are not supported.';
+  if(s.contact){const a=document.createElement('a');a.href='mailto:'+s.contact;a.textContent=s.contact;$('contact').append(' Contact / removal requests: ',a)}
+}).catch(()=>{});
+
+/* ---- background: blur slider, darkness, floating embers ---- */
+const bg=$('bg'),fx=$('fx'),cx=fx.getContext('2d');
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function applyBg(){
+  const b=+$('blur').value,d=+$('dim').value;
+  $('blv').textContent=b+'px';$('dmv').textContent=d+'%';
+  bg.style.setProperty('--bf',b?'blur('+b+'px)':'none');
+  bg.classList.toggle('blur',b>0);
+  document.documentElement.style.setProperty('--dim',d/100);
+  bg.style.boxShadow=d?'inset 0 0 0 100vmax rgba(0,0,0,'+(d/100)+')':'none';
+  store.set('bgBlur',b);store.set('bgDim',d);
+}
+$('blur').value=store.get('bgBlur',0);$('dim').value=store.get('bgDim',0);
+$('emb').checked=store.get('bgEmb',reduce?'0':'1')==='1';
+$('blur').oninput=$('dim').oninput=applyBg;
+$('emb').onchange=()=>{store.set('bgEmb',$('emb').checked?'1':'0');$('emb').checked?startFx():stopFx()};
+$('gear').onclick=()=>{const p=$('panel'),o=p.style.display==='block';p.style.display=o?'none':'block';$('gear').setAttribute('aria-expanded',!o)};
+applyBg();
+
+let W=0,H=0,D=1,P=[],raf=0;
+function size(){D=Math.min(devicePixelRatio||1,2);W=fx.width=innerWidth*D;H=fx.height=innerHeight*D}
+function mk(init){return{x:Math.random()*W,y:init?Math.random()*H:H+20*D,r:(Math.random()*2.2+.7)*D,v:(Math.random()*.7+.3)*D,s:Math.random()*Math.PI*2,a:Math.random()*.6+.25,h:Math.random()*45+5}}
+function frame(){
+  cx.clearRect(0,0,W,H);cx.globalCompositeOperation='lighter';
+  for(const p of P){
+    p.y-=p.v;p.s+=.02;p.x+=Math.sin(p.s)*.5*D;
+    if(p.y<-20){Object.assign(p,mk(false))}
+    const fade=Math.min(1,p.y/(H*.25));
+    cx.fillStyle='hsla('+p.h+',100%,58%,'+(p.a*Math.max(fade,0))+')';
+    cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.283);cx.fill();
+  }
+  raf=requestAnimationFrame(frame);
+}
+function startFx(){stopFx();size();const n=Math.round(Math.min(70,Math.max(28,innerWidth/20)));P=Array.from({length:n},()=>mk(true));frame()}
+function stopFx(){cancelAnimationFrame(raf);raf=0;cx.clearRect(0,0,W,H)}
+addEventListener('resize',()=>{if(raf)startFx()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0}else if($('emb').checked&&!raf)startFx()});
+if($('emb').checked)startFx();
 </script>
 </body>
 </html>

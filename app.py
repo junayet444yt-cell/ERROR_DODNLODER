@@ -2,7 +2,7 @@
 Video Downloader - public-ready version.
 Paste a video link -> the server fetches it -> the video plays in the page and can be downloaded.
 """
-import os, re, glob, time, uuid, base64, socket, secrets, hmac, ipaddress, mimetypes, threading
+import os, re, glob, time, uuid, base64, socket, secrets, hmac, hashlib, ipaddress, mimetypes, threading
 from functools import wraps
 from urllib.parse import urlparse, urljoin
 
@@ -31,13 +31,32 @@ COOKIES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt"
 CACHE = "/tmp/vcache"
 os.makedirs(CACHE, exist_ok=True)
 
-# These sites are not allowed on this downloader.
-BLOCKED = ("youtube.com", "youtu.be", "youtube-nocookie.com", "facebook.com", "fb.watch", "fb.com", "instagram.com")
-BLOCKED_EXTRACTORS = ("youtube", "facebook", "instagram")
+# Sites that are not allowed. Change with the BLOCKED_SITES setting (comma separated, "none" = block nothing).
+# Instagram is allowed by default now. To block it again add instagram.com to BLOCKED_SITES.
+_default_block = "youtube.com,youtu.be,youtube-nocookie.com,facebook.com,fb.watch,fb.com"
+_raw_block = os.environ.get("BLOCKED_SITES", _default_block).strip().lower()
+BLOCKED = tuple(d.strip() for d in _raw_block.split(",") if d.strip() and d.strip() != "none")
+BLOCKED_EXTRACTORS = tuple(sorted({d.split(".")[0] for d in BLOCKED})) or ("\0",)
+_LABELS = {"youtube": "YouTube", "youtu": "YouTube", "youtube-nocookie": "YouTube", "facebook": "Facebook",
+           "fb": "Facebook", "instagram": "Instagram"}
+BLOCKED_NAMES = list(dict.fromkeys(_LABELS.get(d.split(".")[0], d.split(".")[0].title()) for d in BLOCKED))
+BLOCK_MSG = (" and ".join([", ".join(BLOCKED_NAMES[:-1]), BLOCKED_NAMES[-1]]) if len(BLOCKED_NAMES) > 1
+             else (BLOCKED_NAMES[0] if BLOCKED_NAMES else "")) + " links are not supported on this site."
+
+# Cookies: either upload cookies.txt next to app.py, or put the file text (base64) in the COOKIES_B64 setting.
+if os.environ.get("COOKIES_B64"):
+    try:
+        COOKIES = "/tmp/cookies.txt"
+        with open(COOKIES, "wb") as _f:
+            _f.write(base64.b64decode(os.environ["COOKIES_B64"]))
+    except Exception:
+        pass
 
 app = Flask(__name__, static_folder="static")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
-app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+# Stable secret: logins survive a restart / sleep (a random key would log everybody out each time).
+app.secret_key = os.environ.get("SECRET_KEY") or (
+    hashlib.sha256(("evd|" + PASSWORD).encode()).hexdigest() if PASSWORD else secrets.token_hex(32))
 app.config.update(SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_HTTPONLY=True,
                   SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER")),
                   PERMANENT_SESSION_LIFETIME=60 * 60 * 24 * 30)
@@ -51,29 +70,15 @@ slots = threading.BoundedSemaphore(MAX_JOBS)
 @app.after_request
 def security_headers(r):
     r.headers["X-Content-Type-Options"] = "nosniff"
+    if request.path in ("/", "/api/status"):
+        r.headers["Cache-Control"] = "no-cache"
     r.headers["Referrer-Policy"] = "no-referrer"
     r.headers["X-Frame-Options"] = "DENY"
     r.headers["Content-Security-Policy"] = (
         "default-src 'self'; script-src 'self' 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; "
-        "img-src 'self' data: https:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'")
+        "img-src 'self' data: blob: https:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'")
     return r
-
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    """Always return JSON for API routes so the frontend never sees HTML error pages."""
-    if request.path.startswith("/api/"):
-        code = getattr(e, "code", 500)
-        if not isinstance(code, int) or code < 400:
-            code = 500
-        msg = str(e)[:300] if not isinstance(e, (SystemExit, KeyboardInterrupt)) else "Server error"
-        # Avoid leaking internal paths in production
-        if "yt_dlp" in msg or "Traceback" in msg:
-            msg = "Download failed. The site may be blocking this server or the video is unavailable."
-        return jsonify(error=msg), code
-    # Non-API routes keep default HTML behavior
-    raise e
 
 
 def need_auth(f):
@@ -155,6 +160,25 @@ def cleaner():
 
 
 threading.Thread(target=cleaner, daemon=True).start()
+
+
+# ---------- keep the server awake (Render free sleeps after 15 min without visitors) ----------
+SELF_URL = (os.environ.get("KEEPALIVE_URL") or os.environ.get("RENDER_EXTERNAL_URL") or "").rstrip("/")
+
+
+def keepalive():
+    import urllib.request
+    while True:
+        time.sleep(240)  # every 4 minutes
+        try:
+            urllib.request.urlopen(urllib.request.Request(SELF_URL + "/health", headers={"User-Agent": "keepalive"}),
+                                   timeout=25).read()
+        except Exception:
+            pass
+
+
+if SELF_URL:
+    threading.Thread(target=keepalive, daemon=True).start()
 
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
@@ -270,7 +294,8 @@ def run_ydl(url, vid, headers=None):
         opts["extractor_args"] = {"generic": {"impersonate": [""]}}
     if PROXY:
         opts["proxy"] = PROXY
-    if USE_COOKIES and os.path.exists(COOKIES):
+    host = (urlparse(url).hostname or "").lower()
+    if os.path.exists(COOKIES) and (USE_COOKIES or "instagram.com" in host):  # Instagram nearly always needs login cookies
         opts["cookiefile"] = COOKIES
     with yt_dlp.YoutubeDL(opts) as y:
         return y.extract_info(url, download=True)
@@ -288,7 +313,8 @@ def health():
 
 @app.route("/api/status")
 def status():
-    return jsonify(need=bool(PASSWORD), ok=bool(session.get("ok")) or not PASSWORD, contact=CONTACT)
+    return jsonify(need=bool(PASSWORD), ok=bool(session.get("ok")) or not PASSWORD, contact=CONTACT,
+                   blocked=BLOCKED_NAMES, max_mb=MAX_MB)
 
 
 @app.route("/api/login", methods=["POST"])
@@ -315,8 +341,8 @@ def fetch():
         return jsonify(error="Paste a video link first."), 400
     if len(url) > 2000 or not url_is_safe(url):
         return jsonify(error="Invalid link. Paste the full link starting with http:// or https://"), 400
-    if is_blocked(url):
-        return jsonify(error="YouTube, Facebook and Instagram links are not supported on this site."), 403
+    if BLOCKED and is_blocked(url):
+        return jsonify(error=BLOCK_MSG), 403
     if not rate_ok("fetch"):
         return jsonify(error="Too many requests. Please wait a few minutes and try again."), 429
     ref_in = str(body.get("referer") or "").strip()
@@ -338,7 +364,7 @@ def fetch():
         if info is None:  # fallback: dig the real video link out of the page
             try:
                 for direct, ref in find_media(url, ref_in or None):
-                    if is_blocked(direct):
+                    if BLOCKED and is_blocked(direct):
                         continue
                     try:
                         p = urlparse(ref)
@@ -354,12 +380,14 @@ def fetch():
             msg = re.sub(r"\s+", " ", msg)[:200]
             if "does not pass filter" in msg or "duration" in msg:
                 msg = "This video is too long (limit %d minutes) or is a live stream." % MAX_MINUTES
+            elif "instagram" in url.lower() and re.search(r"login|cookie|rate-limit|not available|empty media|private", msg, re.I):
+                msg = "Instagram wants a login. Add your cookies (COOKIES_B64 setting or cookies.txt) and try again. Private accounts need the cookies of an account that follows them."
             elif "403" in msg or "blocked" in msg:
                 msg += " | Tip: fill the 'Embedded on' box with the page where this video is shown."
             return jsonify(error="Could not get the video: " + msg), 400
-        if str(info.get("extractor_key", "")).lower().startswith(BLOCKED_EXTRACTORS):
+        if BLOCKED and str(info.get("extractor_key", "")).lower().startswith(BLOCKED_EXTRACTORS):
             drop(vid)
-            return jsonify(error="YouTube, Facebook and Instagram links are not supported on this site."), 403
+            return jsonify(error=BLOCK_MSG), 403
         found = [f for f in glob.glob(os.path.join(CACHE, vid + ".*")) if not f.endswith((".part", ".ytdl"))]
         if not found:
             drop(vid)

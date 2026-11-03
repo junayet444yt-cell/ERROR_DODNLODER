@@ -4,7 +4,9 @@ VIDEO DOWNLOADER - public-ready version
 WHAT IT DOES
 Paste a video link -> the video appears and plays -> Download button saves it.
 Works with most sites (TikTok, Twitter/X, embed players, direct .mp4/.m3u8 links ...).
-YouTube, Facebook and Instagram are blocked on purpose (safer for a public site).
+Instagram videos/reels work (add cookies, see below). YouTube and Facebook are blocked (BLOCKED_SITES setting).
+You can also press "Add Video" to play a video from your own device (it is not uploaded anywhere).
+Background: gear button (bottom right) = blur slider, darkness and floating embers.
 
 DEPLOY ON RENDER
 1. Upload ALL files of this folder to your GitHub repo (Dockerfile must be at the top level).
@@ -23,6 +25,9 @@ MAX_JOBS         downloads at the same time, default 2
 MAX_CACHE_MB     total disk for saved videos, default 1500
 CONTACT_EMAIL    shown in the page footer (good for a public site)
 PROXY_URL        proxy for sites that block the server, e.g. socks5://user:pass@host:port
+BLOCKED_SITES   comma list of blocked sites, "none" = block nothing (add instagram.com to block it)
+COOKIES_B64      Instagram login cookies (base64 of cookies.txt) - or upload cookies.txt
+KEEPALIVE_URL    only if not on Render; Render fills it automatically
 USE_COOKIES      set to 1 to use cookies.txt (do NOT use your personal cookies on a public site)
 
 IF A SITE SAYS "403"
@@ -38,3 +43,7 @@ PUBLIC SITE ADVICE
 - You are responsible for what people download through your server. Keep the footer notice,
   set CONTACT_EMAIL, and remove complaints quickly.
 - Update yt-dlp now and then (redeploy rebuilds it) because sites change often.
+
+KEEP THE SERVER AWAKE 24 HOURS
+The app pings itself every 4 minutes. For a stronger guarantee make a free monitor on uptimerobot.com
+that opens https://YOUR-APP.onrender.com/health every 5 minutes. (Free Render has 750 hours a month = enough for one app.)
