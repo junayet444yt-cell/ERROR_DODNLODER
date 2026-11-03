@@ -3,127 +3,109 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0d0206">
+<meta name="theme-color" content="#06070a">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>ERROR HUB DOWNLODER</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Metal+Mania&family=Chakra+Petch:wght@400;600&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600&family=Cormorant+Garamond:ital,wght@1,600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Manrope:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-:root{--h:0;--bg:#0d0206;--txt:#fff1ea;
---card:hsl(calc(340 + var(--h)) 70% 7%);--line:hsl(calc(345 + var(--h)) 66% 21%);--mut:hsl(calc(14 + var(--h)) 52% 74%);
---a:hsl(calc(352 + var(--h)) 100% 56%);--b:hsl(calc(33 + var(--h)) 100% 50%);--c:hsl(calc(48 + var(--h)) 100% 62%);
---d1:hsl(calc(350 + var(--h)) 82% 26%);--d2:hsl(calc(28 + var(--h)) 100% 24%);--d3:hsl(calc(325 + var(--h)) 78% 16%);--d4:hsl(calc(340 + var(--h)) 66% 14%)}
+:root{--bg:#06070a;--s1:#0c0e13;--s2:#12151c;--line:#1c212b;--line2:#2b3243;--txt:#e8eaf0;--mut:#8890a5;--dim:#596176;--acc:#8f84ff;--acc2:#c3bcff;--err:#ff6b7d;--ok:#6fd6a4}
 *{box-sizing:border-box}
-html{background:var(--bg)}
-body{margin:0;min-height:100vh;font-family:"Chakra Petch",system-ui,sans-serif;color:var(--txt)}
-/* live background: NOT blurred by default, you control the blur with the slider */
-#bg{position:fixed;inset:0;z-index:-1;pointer-events:none;
-background:radial-gradient(900px 500px at 10% -10%,var(--d1) 0,transparent 60%),radial-gradient(800px 500px at 100% 0,var(--d2) 0,transparent 55%),radial-gradient(700px 400px at 50% 110%,var(--d3) 0,transparent 60%),var(--bg);
-filter:var(--bf,none)}
+html{background:var(--bg);overscroll-behavior-y:contain}
+body{margin:0;min-height:100vh;font-family:Manrope,system-ui,sans-serif;color:var(--txt);overscroll-behavior-y:contain;-webkit-tap-highlight-color:transparent}
+/* background: faint dot grid fading out from the top, optional user video */
+#bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+radial-gradient(700px 380px at 50% -8%,#1a1733 0,transparent 70%),
+radial-gradient(circle,#ffffff0d 1px,transparent 1.5px) 0 0/26px 26px,var(--bg);filter:var(--bf,none)}
+#bg::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,transparent 30%,var(--bg) 85%)}
 #bg.blur{transform:scale(1.08)}
-#fx{position:absolute;inset:0;width:100%;height:100%}
 #bgv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
-#shade{position:absolute;inset:0;background:#000;opacity:0}
-p.sub,.note,#msg{text-shadow:0 1px 8px #000c}
-main{position:relative;max-width:780px;margin:0 auto;padding:30px 16px 80px}
-h1,h2{font-family:Creepster,cursive;font-weight:400;letter-spacing:.04em}
-h1{font-size:clamp(36px,10vw,74px);margin:6px 0 2px;line-height:1.05;background:linear-gradient(90deg,var(--a),var(--b),var(--c),var(--b),var(--a));background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
-filter:drop-shadow(0 0 18px color-mix(in srgb,var(--a) 53%,transparent));animation:shine 6s linear infinite}
-@keyframes shine{to{background-position:200% center}}
-.brand{display:flex;flex-direction:column;align-items:flex-start;margin:6px 0 4px;line-height:1;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:inherit;filter:none;animation:none}
-.brand .dev{font-family:Creepster,cursive;font-weight:400;font-size:clamp(40px,11.5vw,78px);letter-spacing:.05em;background:linear-gradient(90deg,var(--a),var(--b),var(--c),var(--b),var(--a));background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--a) 55%,transparent))}
-.brand .ang{font-family:"Cinzel Decorative",serif;font-weight:900;font-size:clamp(16px,5.2vw,38px);letter-spacing:.1em;margin-top:7px;white-space:nowrap;background:linear-gradient(180deg,#fff,#fff0c4 55%,#ffd98a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 8px #fff8d6aa) drop-shadow(0 0 20px #ffe7a066)}
-.brand .ang::after{content:"";display:block;height:2px;margin-top:9px;border-radius:2px;background:linear-gradient(90deg,var(--a),#fff 45%,transparent)}
-p.sub{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:600;color:var(--mut);margin:0 0 24px;font-size:21px;line-height:1.3}
+#shade{position:absolute;inset:0;background:#000;opacity:0;z-index:1}
+main{position:relative;max-width:760px;margin:0 auto;padding:34px 18px 90px}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{margin:0;line-height:1}
+.brand .a{display:block;font-family:Sora,sans-serif;font-weight:700;font-size:clamp(30px,8vw,46px);letter-spacing:.02em;color:var(--txt)}
+.brand .b{display:block;margin-top:8px;font-family:"JetBrains Mono",monospace;font-weight:400;font-size:13px;letter-spacing:.32em;color:var(--acc)}
+.social{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;font-size:13px;font-weight:500;color:var(--mut);text-decoration:none;background:var(--s1);border:1px solid var(--line);border-radius:999px;transition:color .2s,border-color .2s}
+.pill:hover{color:var(--txt);border-color:var(--line2)}
+.pill svg{width:16px;height:16px;fill:currentColor}
+p.sub{margin:44px 0 16px;font-size:17px;line-height:1.5;color:var(--mut);max-width:46ch}
+/* the command bar */
 .box{display:flex;gap:10px;flex-wrap:wrap}
-.field{position:relative;flex:1 1 280px}
-input[type=url],input[type=password]{width:100%;padding:15px 44px 15px 16px;font:inherit;color:var(--txt);background:color-mix(in srgb,var(--card) 80%,transparent);border:2px solid var(--line);border-radius:14px;outline:none;transition:border-color .2s,box-shadow .2s}
-input[type=url]:focus,input[type=password]:focus{border-color:var(--b);box-shadow:0 0 0 4px color-mix(in srgb,var(--b) 19%,transparent),0 0 28px color-mix(in srgb,var(--a) 25%,transparent)}
-.hint{margin:10px 2px 0;font-size:15px;color:var(--c);text-shadow:0 1px 8px #000c}
-.x{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:50%;background:var(--line);color:#fff;font-size:16px;cursor:pointer;display:none}
-button.go,.dl,.close{font-family:"Metal Mania",cursive;letter-spacing:.05em}
-button.go{position:relative;overflow:hidden;padding:15px 28px;font-size:20px;color:#fff;background:linear-gradient(90deg,var(--a),var(--b));border:0;border-radius:14px;cursor:pointer;text-shadow:0 1px 6px #0008;box-shadow:0 6px 24px color-mix(in srgb,var(--a) 33%,transparent);transition:transform .15s,box-shadow .2s}
-button.go::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,#fff5,transparent);transform:skewX(-20deg);transition:left .5s}
-button.go:hover:not(:disabled)::after{left:130%}
-button.go:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px color-mix(in srgb,var(--a) 53%,transparent)}
-button.go:active:not(:disabled){transform:translateY(0)}
-button.pbtn{flex:1;padding:9px 10px;font-family:"Metal Mania",cursive;font-size:16px;letter-spacing:.04em;color:var(--txt);background:var(--d4);border:2px solid var(--line);border-radius:10px;cursor:pointer;transition:border-color .2s}
-button.pbtn:hover{border-color:var(--b)}
-button.pbtn.main{color:#1a0300;background:linear-gradient(90deg,var(--c),var(--b));border-color:transparent}
-button:disabled{opacity:.6;cursor:wait}
-button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--c);outline-offset:2px}
-details{margin-top:12px;color:var(--mut)}
-summary{cursor:pointer;font-size:14px;padding:4px 0}
-details input{margin-top:8px;padding-right:16px}
-#msg{margin:16px 0;min-height:24px;color:var(--mut)}
-#msg.err{color:#ff7a8a}
-.spin{display:inline-block;width:16px;height:16px;border:3px solid var(--line);border-top-color:var(--b);border-radius:50%;animation:s .8s linear infinite;vertical-align:-3px;margin-right:8px}
+.field{position:relative;flex:1 1 300px}
+.field::before{content:"›";position:absolute;left:16px;top:50%;transform:translateY(-52%);font-family:"JetBrains Mono",monospace;font-size:20px;color:var(--acc);pointer-events:none}
+input[type=url],input[type=password]{width:100%;padding:16px 46px 16px 38px;font:400 14.5px "JetBrains Mono",monospace;color:var(--txt);background:var(--s1);border:1px solid var(--line2);border-radius:12px;outline:none;transition:border-color .2s,box-shadow .2s}
+input::placeholder{color:var(--dim)}
+input[type=url]:focus,input[type=password]:focus{border-color:var(--acc);box-shadow:0 0 0 4px #8f84ff1f}
+.x{position:absolute;right:9px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:0;border-radius:50%;background:var(--s2);color:var(--mut);font-size:13px;cursor:pointer;display:none}
+.x:hover{color:var(--txt)}
+button.go{padding:16px 28px;font:600 15px Sora,sans-serif;letter-spacing:.01em;color:#0a0814;background:var(--acc2);border:0;border-radius:12px;cursor:pointer;transition:background .2s,transform .15s}
+button.go:hover:not(:disabled){background:#fff;transform:translateY(-1px)}
+button:disabled{opacity:.55;cursor:wait}
+.hint{margin:12px 2px 0;font-size:13.5px;color:var(--dim)}
+button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+.ghost{margin-top:14px;padding:10px 16px;font:500 14px Manrope,sans-serif;color:var(--txt);background:var(--s1);border:1px solid var(--line2);border-radius:10px;cursor:pointer}
+.ghost:hover{border-color:var(--acc)}
+details{margin-top:14px;color:var(--dim)}
+summary{cursor:pointer;font-size:13.5px;padding:4px 0}
+details input{margin-top:8px;padding-left:16px}
+#msg{margin:18px 0;min-height:24px;font-size:14.5px;color:var(--mut)}
+#msg.err{color:var(--err)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--acc2);border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px;margin-right:9px}
 @keyframes s{to{transform:rotate(360deg)}}
-#res{display:none;background:color-mix(in srgb,var(--card) 90%,transparent);border:2px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 0 50px color-mix(in srgb,var(--a) 19%,transparent),0 20px 60px #000a;animation:pop .35s ease-out}
-@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+#res{display:none;background:var(--s1);border:1px solid var(--line2);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px #000c,0 0 0 1px #8f84ff14}
 video{width:100%;max-height:70vh;background:#000;display:block}
-.info{padding:14px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.info h2{flex:1 1 100%;margin:0;font-family:"Cinzel Decorative",serif;font-weight:700;letter-spacing:.03em;font-size:19px;line-height:1.3;word-break:break-word}
-.dl{display:inline-block;padding:11px 22px;font-size:19px;color:#1a0300;background:linear-gradient(90deg,var(--c),var(--b));border-radius:12px;text-decoration:none;box-shadow:0 4px 18px color-mix(in srgb,var(--b) 27%,transparent);transition:transform .15s}
-.dl:hover{transform:translateY(-2px)}
-.close{padding:11px 18px;font-size:19px;color:var(--txt);background:transparent;border:2px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .2s}
-.close:hover{border-color:var(--a)}
-.note{margin-top:34px;font-size:13px;color:var(--mut);line-height:1.6}
-.note a{color:var(--c)}
-.size{color:var(--mut);font-size:14px}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.top h1{flex:1 1 auto;min-width:0}
-.social{display:flex;flex-direction:column;align-items:stretch;gap:7px;flex:none}
-.discord{display:flex;width:auto;align-items:center;gap:8px;margin:0;padding:7px 16px 7px 11px;font-family:"Metal Mania",cursive;font-size:15px;letter-spacing:.05em;color:#fff;text-decoration:none;background:linear-gradient(135deg,#5865f2,#7983f5);border-radius:999px;box-shadow:0 4px 16px #5865f277,inset 0 1px 0 #ffffff40;transition:transform .15s,box-shadow .2s}
-.discord svg{width:19px;height:19px;flex:none;filter:drop-shadow(0 1px 4px #0006)}
-.discord:hover{transform:translateY(-2px);box-shadow:0 10px 34px #5865f2cc,inset 0 1px 0 #ffffff55}
-.discord:active{transform:translateY(0)}
-.discord.facebook{background:linear-gradient(135deg,#1877f2,#4a9bff);box-shadow:0 4px 16px #1877f277,inset 0 1px 0 #ffffff40}
-.discord.facebook:hover{box-shadow:0 10px 34px #1877f2cc,inset 0 1px 0 #ffffff55}
-/* background settings */
-#gear{position:fixed;right:14px;bottom:14px;width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:color-mix(in srgb,var(--card) 93%,transparent);color:var(--c);font-size:21px;cursor:pointer;z-index:5;transition:transform .3s,border-color .2s}
-#gear:hover{transform:rotate(60deg);border-color:var(--b)}
-#panel{position:fixed;right:14px;bottom:70px;width:min(280px,calc(100vw - 28px));padding:16px;background:color-mix(in srgb,var(--card) 95%,transparent);border:2px solid var(--line);border-radius:16px;z-index:5;display:none;box-shadow:0 10px 40px #000a}
-#panel h3{margin:0 0 12px;font-family:"Metal Mania",cursive;font-weight:400;font-size:20px;color:var(--c)}
-#panel label{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-top:10px}
-#panel input[type=range]{width:100%;accent-color:var(--b)}
-#panel .btns{display:flex;gap:8px;margin-top:6px}
-#panel{max-height:calc(100vh - 100px);overflow:auto}
-#panel .row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:14px;color:var(--mut)}
+.info{padding:16px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line)}
+.info h2{flex:1 1 100%;margin:0 0 4px;font:500 16px/1.4 Manrope,sans-serif;word-break:break-word}
+.dl{display:inline-block;padding:11px 22px;font:600 14.5px Sora,sans-serif;color:#0a0814;background:var(--acc2);border-radius:10px;text-decoration:none;transition:background .2s}
+.dl:hover{background:#fff}
+.close{padding:11px 18px;font:500 14.5px Manrope,sans-serif;color:var(--mut);background:transparent;border:1px solid var(--line2);border-radius:10px;cursor:pointer}
+.close:hover{color:var(--txt);border-color:var(--mut)}
+.size{margin-left:auto;font:400 13px "JetBrains Mono",monospace;color:var(--dim)}
+.note{margin-top:40px;font-size:12.5px;color:var(--dim);line-height:1.7}
+.note a{color:var(--acc2)}
+/* settings */
+#gear{position:fixed;right:14px;bottom:14px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line2);background:var(--s1);color:var(--mut);font-size:19px;cursor:pointer;z-index:5;transition:color .2s,border-color .2s}
+#gear:hover{color:var(--txt);border-color:var(--acc)}
+#panel{position:fixed;right:14px;bottom:68px;width:min(290px,calc(100vw - 28px));max-height:calc(100vh - 100px);overflow:auto;padding:18px;background:var(--s1);border:1px solid var(--line2);border-radius:14px;z-index:5;display:none;box-shadow:0 20px 60px #000d}
+#panel h3{margin:0 0 12px;font:700 15px Sora,sans-serif}
+#panel label{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);margin-top:12px}
+#panel input[type=range]{width:100%;accent-color:var(--acc)}
+#panel .btns{display:flex;gap:8px}
+#panel .row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:13px;color:var(--mut)}
+button.pbtn{flex:1;padding:9px 10px;font:500 13px Manrope,sans-serif;color:var(--txt);background:var(--s2);border:1px solid var(--line2);border-radius:8px;cursor:pointer}
+button.pbtn:hover{border-color:var(--acc)}
 #lock{position:fixed;inset:0;background:var(--bg);display:none;place-items:center;padding:20px;z-index:9}
 #lock div{max-width:340px;width:100%}
-@media (prefers-reduced-motion:reduce){.spin,h1,#res{animation:none}}
+#lock h1{font:700 26px Sora,sans-serif;margin:0 0 16px}
+#lock input{padding-left:16px}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}*{transition:none!important}}
 </style>
 </head>
 <body>
-<div id="bg"><video id="bgv" muted loop playsinline autoplay></video><div id="shade"></div><canvas id="fx"></canvas></div>
+<div id="bg"><video id="bgv" muted loop playsinline autoplay></video><div id="shade"></div></div>
 <main>
   <header class="top">
-    <h1 class="brand" aria-label="ERROR HUB DOWNLODER"><span class="dev">ERROR HUB</span><span class="ang">DOWNLODER</span></h1>
-  <div class="social">
-    <a class="discord" href="https://discord.gg/ugwfaHSH3" target="_blank" rel="noopener noreferrer" aria-label="Join our Discord server">
-      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
-      <span>Join our Discord</span>
-    </a>
-    <a class="discord facebook" href="https://www.facebook.com/share/14sZEydEd2W/" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Facebook">
-      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" fill="currentColor"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>
-      <span>Follow on Facebook</span>
-    </a>
+    <h1 class="brand" aria-label="ERROR HUB DOWNLODER"><span class="a">ERROR HUB</span><span class="b">DOWNLODER</span></h1>
+    <div class="social">
+      <a class="pill" href="https://discord.gg/ugwfaHSH3" target="_blank" rel="noopener noreferrer" aria-label="Join our Discord server"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>Discord</a>
+      <a class="pill" href="https://www.facebook.com/share/14sZEydEd2W/" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>Facebook</a>
     </div>
   </header>
-  <p class="sub">Paste any video link. The video plays below, and you can download it.</p>
+  <p class="sub">Paste a video link. It plays right here, and you can save it.</p>
   <div class="box">
     <div class="field">
-      <input id="url" type="url" placeholder="Paste video link here" autocomplete="off" aria-label="Video link">
-      <button class="x" id="clr" aria-label="Clear link">✕</button>
+      <input id="url" type="url" placeholder="Paste video link" autocomplete="off" aria-label="Video link">
+      <button class="x" id="clr" type="button" aria-label="Clear link">✕</button>
     </div>
-    <button class="go" id="go">Get Video</button>
+    <button class="go" id="go" type="button">Get video</button>
   </div>
-  <p class="hint">Instagram, TikTok, Twitter and 18+ content download</p>
-  <button class="pbtn main" id="install" type="button" style="display:none;flex:none;margin-top:12px;padding:11px 18px;font-size:18px">📲 Install as App</button>
+  <p class="hint">Instagram, TikTok, Twitter / X and 18+ videos</p>
+  <button class="ghost" id="install" type="button" style="display:none">Install as app</button>
   <input id="file" type="file" accept="video/*,.mkv,.mov,.m4v,.3gp" hidden>
   <details>
     <summary>Video not loading (403 / blocked)?</summary>
@@ -135,60 +117,70 @@ video{width:100%;max-height:70vh;background:#000;display:block}
     <div class="info">
       <h2 id="ttl"></h2>
       <a class="dl" id="dl" href="#">Download</a>
-      <button class="close" id="cls">Close Video</button>
+      <button class="close" id="cls" type="button">Close video</button>
       <span class="size" id="sz"></span>
     </div>
   </section>
   <p class="note"><span id="rule">Only download videos you own or have permission to save.</span> Videos are deleted from the server after a short time.<span id="contact"></span></p>
 </main>
 
-<button id="gear" aria-label="Background settings" aria-expanded="false">⚙</button>
+<button id="gear" type="button" aria-label="Background settings" aria-expanded="false">⚙</button>
 <div id="panel" role="dialog" aria-label="Background settings">
   <h3>Background</h3>
-  <div class="btns"><button class="pbtn main" id="bgpick" type="button">Add background video</button><button class="pbtn" id="bgrm" type="button">Remove</button></div>
-  <label for="vop"><span>Video transparency</span><span id="vov">100%</span></label>
+  <div class="btns"><button class="pbtn" id="bgpick" type="button">Add video</button><button class="pbtn" id="bgrm" type="button">Remove</button></div>
+  <label for="vop"><span>Video opacity</span><span id="vov">100%</span></label>
   <input id="vop" type="range" min="10" max="100" step="5" value="100">
   <label for="blur"><span>Blur</span><span id="blv">0</span></label>
   <input id="blur" type="range" min="0" max="24" step="1" value="0">
   <label for="dim"><span>Darkness</span><span id="dmv">0</span></label>
   <input id="dim" type="range" min="0" max="80" step="5" value="0">
-  <div class="row"><span>Video sound</span><input id="snd" type="checkbox" style="accent-color:var(--b);width:20px;height:20px"></div>
-  <div class="row"><span>Auto colour change (RGB)</span><input id="rgb" type="checkbox" checked style="accent-color:var(--b);width:20px;height:20px"></div>
-  <div class="row"><span>Floating embers</span><input id="emb" type="checkbox" checked style="accent-color:var(--b);width:20px;height:20px"></div>
-  <div class="btns" style="margin-top:14px"><button class="pbtn" id="norm" type="button">Normal (reset)</button></div>
+  <div class="row"><span>Video sound</span><input id="snd" type="checkbox" style="accent-color:var(--acc);width:18px;height:18px"></div>
+  <div class="btns" style="margin-top:16px"><button class="pbtn" id="norm" type="button">Reset</button></div>
 </div>
 
 <div id="lock"><div>
   <h1>Password</h1>
-  <input id="pw" type="password" placeholder="Enter password" style="padding-right:16px">
-  <p id="lerr" style="color:#ff7a8a;min-height:22px"></p>
-  <button class="go" id="lgo" style="width:100%">Enter</button>
+  <input id="pw" type="password" placeholder="Enter password">
+  <p id="lerr" style="color:var(--err);min-height:22px"></p>
+  <button class="go" id="lgo" type="button" style="width:100%">Enter</button>
 </div></div>
 <script>
 const $=id=>document.getElementById(id);
 const url=$('url'),msg=$('msg'),go=$('go'),clr=$('clr'),vid=$('vid');
-const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
 let timer=null;
 
 function say(t,err,spin){msg.className=err?'err':'';msg.textContent='';if(spin){const s=document.createElement('span');s.className='spin';msg.appendChild(s)}msg.appendChild(document.createTextNode(t||''))}
-url.addEventListener('input',()=>clr.style.display=url.value?'block':'none');
-clr.onclick=()=>{url.value='';clr.style.display='none';url.focus()};
+
+/* ---- remember the link and the last video, so an accidental reload never wipes them ---- */
+const KEEP='eh_last',LIFE=19*60*1000;
+function load(){try{return JSON.parse(store.get(KEEP,'{}'))||{}}catch(e){return{}}}
+function save(patch){store.set(KEEP,JSON.stringify(Object.assign(load(),patch)))}
+function typed(){clr.style.display=url.value?'block':'none';save({u:url.value,ref:$('ref').value})}
+url.addEventListener('input',typed);$('ref').addEventListener('input',typed);
+clr.onclick=()=>{url.value='';typed();url.focus()};
 
 function closeVideo(){
   vid.pause();vid.removeAttribute('src');vid.removeAttribute('poster');vid.load();
   $('res').style.display='none';
 }
-$('cls').onclick=()=>{closeVideo();say('')};
-
+$('cls').onclick=()=>{closeVideo();save({d:null});say('')};
 vid.addEventListener('error',()=>{
   if(!vid.getAttribute('src'))return;
-  say("The browser can't play this format. Use the Download button instead.",true);
+  say("The browser can't play this video. Use Download instead.",true);
 });
+
+function show(d){
+  vid.src='/media/'+d.id;if(d.thumbnail)vid.poster=d.thumbnail;
+  $('ttl').textContent=d.title;$('dl').href='/media/'+d.id+'?dl=1';
+  $('sz').textContent=(d.size/1048576).toFixed(1)+' MB';
+  $('res').style.display='block';
+}
 
 /* ---- link downloader ---- */
 async function run(){
   const u=url.value.trim(); if(!u){say('Paste a link first',true);return}
-  closeVideo(); go.disabled=true;
+  closeVideo();save({d:null});go.disabled=true;
   let sec=0; const tick=()=>say('Getting the video… '+sec+'s (big videos can take a while)',false,true);
   tick(); timer=setInterval(()=>{sec++;tick()},1000);
   try{
@@ -196,15 +188,24 @@ async function run(){
     if(r.status===401){$('lock').style.display='grid';say('');return}
     let d={}; try{d=await r.json()}catch(e){throw new Error(r.status===502||r.status===504?'The server is waking up or busy. Wait 30 seconds and try again.':'Something went wrong')}
     if(!r.ok) throw new Error(d.error||'Something went wrong');
-    vid.src='/media/'+d.id; if(d.thumbnail) vid.poster=d.thumbnail;
-    $('ttl').textContent=d.title; $('dl').style.display=''; $('dl').href='/media/'+d.id+'?dl=1';
-    $('sz').textContent=(d.size/1048576).toFixed(1)+' MB';
-    $('res').style.display='block'; say('');
-    $('res').scrollIntoView({behavior:'smooth'});
+    show(d);save({d:d,t:Date.now()});say('');
+    $('res').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){say(e.message,true)}
   finally{clearInterval(timer);go.disabled=false}
 }
 go.onclick=run; url.addEventListener('keydown',e=>{if(e.key==='Enter')run()});
+
+/* restore after a reload */
+(async()=>{
+  const s=load();
+  if(s.u){url.value=s.u;clr.style.display='block'}
+  if(s.ref)$('ref').value=s.ref;
+  if(s.d&&s.t&&Date.now()-s.t<LIFE){
+    try{const r=await fetch('/media/'+s.d.id,{method:'HEAD'});if(r.ok){show(s.d);return}}catch(e){}
+    save({d:null});say('That video expired on the server. Press Get video again.',false);
+  }else if(s.d){save({d:null})}
+})();
+
 async function login(){
   const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('pw').value})});
   if(r.ok){$('lock').style.display='none'}else{$('lerr').textContent='Wrong password'}
@@ -216,10 +217,8 @@ fetch('/api/status').then(r=>r.json()).then(s=>{
   if(s.contact){const a=document.createElement('a');a.href='mailto:'+s.contact;a.textContent=s.contact;$('contact').append(' Contact / removal requests: ',a)}
 }).catch(()=>{});
 
-/* ---- background: blur slider, darkness, floating embers ---- */
-const bg=$('bg'),fx=$('fx'),cx=fx.getContext('2d');
-const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-const bgv=$('bgv');
+/* ---- optional background video: stays on your device (IndexedDB), nothing is uploaded ---- */
+const bg=$('bg'),bgv=$('bgv');
 function applyBg(){
   const b=+$('blur').value,d=+$('dim').value,o=+$('vop').value;
   $('blv').textContent=b+'px';$('dmv').textContent=d+'%';$('vov').textContent=o+'%';
@@ -229,11 +228,8 @@ function applyBg(){
   store.set('bgBlur',b);store.set('bgDim',d);store.set('bgOp',o);
 }
 $('blur').value=store.get('bgBlur',0);$('dim').value=store.get('bgDim',0);$('vop').value=store.get('bgOp',100);
-$('emb').checked=store.get('bgEmb',reduce?'0':'1')==='1';
 $('blur').oninput=$('dim').oninput=$('vop').oninput=applyBg;
 $('norm').onclick=()=>{$('blur').value=0;$('dim').value=0;$('vop').value=100;applyBg()};
-
-/* background video: picked from your device, kept in the browser (IndexedDB) so it stays after reload. Nothing is uploaded. */
 const idb={db:null,
   open(){return new Promise(res=>{try{const r=indexedDB.open('devilbg',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>{this.db=r.result;res(true)};r.onerror=()=>res(false)}catch(e){res(false)}})},
   put(f){return new Promise(res=>{if(!this.db)return res(false);try{const t=this.db.transaction('f','readwrite');t.objectStore('f').put(f,'bg');t.oncomplete=()=>res(true);t.onerror=t.onabort=()=>res(false)}catch(e){res(false)}})},
@@ -257,48 +253,15 @@ $('bgrm').onclick=async()=>{clearBgVideo();await idb.del()};
 $('snd').onchange=()=>{bgv.muted=!$('snd').checked;if(!bgv.muted)bgv.play().catch(()=>{})};
 bgv.addEventListener('error',()=>{if(bgv.getAttribute('src')){clearBgVideo();say("This video format can't be used as background. Try an MP4.",true)}});
 idb.open().then(async ok=>{if(ok){const f=await idb.get();if(f)setBgVideo(f)}});
-$('emb').onchange=()=>{store.set('bgEmb',$('emb').checked?'1':'0');$('emb').checked?startFx():stopFx()};
 $('gear').onclick=()=>{const p=$('panel'),o=p.style.display==='block';p.style.display=o?'none':'block';$('gear').setAttribute('aria-expanded',!o)};
 applyBg();
 
-/* ---- slow automatic colour change (all colours drift around the colour wheel) ---- */
-let hue=+store.get('hue',0),hueTimer=0;
-const root=document.documentElement,themeMeta=document.querySelector('meta[name=theme-color]');
-function setHue(){root.style.setProperty('--h',hue.toFixed(1));themeMeta.content='hsl('+((340+hue)%360).toFixed(0)+',70%,6%)'}
-function startHue(){stopHue();hueTimer=setInterval(()=>{hue=(hue+.5)%360;setHue()},100)}
-function stopHue(){clearInterval(hueTimer);hueTimer=0;store.set('hue',hue.toFixed(1))}
-$('rgb').checked=store.get('bgRgb',reduce?'0':'1')==='1';
-$('rgb').onchange=()=>{store.set('bgRgb',$('rgb').checked?'1':'0');$('rgb').checked?startHue():stopHue()};
-setHue();if($('rgb').checked)startHue();
-addEventListener('pagehide',()=>store.set('hue',hue.toFixed(1)));
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(hueTimer){clearInterval(hueTimer);hueTimer=0}}else if($('rgb').checked&&!hueTimer)startHue()});
-
-/* ---- install as an app (Chrome on phone and PC) ---- */
+/* ---- install as an app ---- */
 let deferred=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;$('install').style.display='inline-block'});
 $('install').onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;$('install').style.display='none'};
 addEventListener('appinstalled',()=>{$('install').style.display='none'});
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
-
-let W=0,H=0,D=1,P=[],raf=0;
-function size(){D=Math.min(devicePixelRatio||1,2);W=fx.width=innerWidth*D;H=fx.height=innerHeight*D}
-function mk(init){return{x:Math.random()*W,y:init?Math.random()*H:H+20*D,r:(Math.random()*2.2+.7)*D,v:(Math.random()*.7+.3)*D,s:Math.random()*Math.PI*2,a:Math.random()*.6+.25,h:Math.random()*45+5}}
-function frame(){
-  cx.clearRect(0,0,W,H);cx.globalCompositeOperation='lighter';
-  for(const p of P){
-    p.y-=p.v;p.s+=.02;p.x+=Math.sin(p.s)*.5*D;
-    if(p.y<-20){Object.assign(p,mk(false))}
-    const fade=Math.min(1,p.y/(H*.25));
-    cx.fillStyle='hsla('+((p.h+hue)%360)+',100%,58%,'+(p.a*Math.max(fade,0))+')';
-    cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.283);cx.fill();
-  }
-  raf=requestAnimationFrame(frame);
-}
-function startFx(){stopFx();size();const n=Math.round(Math.min(70,Math.max(28,innerWidth/20)));P=Array.from({length:n},()=>mk(true));frame()}
-function stopFx(){cancelAnimationFrame(raf);raf=0;cx.clearRect(0,0,W,H)}
-addEventListener('resize',()=>{if(raf)startFx()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0}else if($('emb').checked&&!raf)startFx()});
-if($('emb').checked)startFx();
 </script>
 </body>
 </html>
