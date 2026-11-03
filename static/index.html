@@ -4,16 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0d0206">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Devil Video Downloader</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Metal+Mania&family=Chakra+Petch:wght@400;600&display=swap">
 <style>
-:root{--bg:#0d0206;--card:#1c0710;--line:#5a1226;--txt:#fff1ea;--mut:#d9a08f;--a:#ff1e3c;--b:#ff8a00;--c:#ffd43b}
+:root{--h:0;--bg:#0d0206;--txt:#fff1ea;
+--card:hsl(calc(340 + var(--h)) 70% 7%);--line:hsl(calc(345 + var(--h)) 66% 21%);--mut:hsl(calc(14 + var(--h)) 52% 74%);
+--a:hsl(calc(352 + var(--h)) 100% 56%);--b:hsl(calc(33 + var(--h)) 100% 50%);--c:hsl(calc(48 + var(--h)) 100% 62%);
+--d1:hsl(calc(350 + var(--h)) 82% 26%);--d2:hsl(calc(28 + var(--h)) 100% 24%);--d3:hsl(calc(325 + var(--h)) 78% 16%);--d4:hsl(calc(340 + var(--h)) 66% 14%)}
 *{box-sizing:border-box}
 html{background:var(--bg)}
 body{margin:0;min-height:100vh;font-family:"Chakra Petch",system-ui,sans-serif;color:var(--txt)}
 /* live background: NOT blurred by default, you control the blur with the slider */
 #bg{position:fixed;inset:0;z-index:-1;pointer-events:none;
-background:radial-gradient(900px 500px at 10% -10%,#7a0b1f 0,transparent 60%),radial-gradient(800px 500px at 100% 0,#7a3200 0,transparent 55%),radial-gradient(700px 400px at 50% 110%,#4a0a2a 0,transparent 60%),var(--bg);
+background:radial-gradient(900px 500px at 10% -10%,var(--d1) 0,transparent 60%),radial-gradient(800px 500px at 100% 0,var(--d2) 0,transparent 55%),radial-gradient(700px 400px at 50% 110%,var(--d3) 0,transparent 60%),var(--bg);
 filter:var(--bf,none)}
 #bg.blur{transform:scale(1.08)}
 #fx{position:absolute;inset:0;width:100%;height:100%}
@@ -23,21 +31,21 @@ p.sub,.note,#msg{text-shadow:0 1px 8px #000c}
 main{position:relative;max-width:780px;margin:0 auto;padding:30px 16px 80px}
 h1,h2{font-family:Creepster,cursive;font-weight:400;letter-spacing:.04em}
 h1{font-size:clamp(42px,10vw,74px);margin:6px 0 2px;line-height:1.05;background:linear-gradient(90deg,var(--a),var(--b),var(--c),var(--b),var(--a));background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
-filter:drop-shadow(0 0 18px #ff1e3c88);animation:shine 6s linear infinite}
+filter:drop-shadow(0 0 18px color-mix(in srgb,var(--a) 53%,transparent));animation:shine 6s linear infinite}
 @keyframes shine{to{background-position:200% center}}
 p.sub{color:var(--mut);margin:0 0 24px;font-size:17px}
 .box{display:flex;gap:10px;flex-wrap:wrap}
 .field{position:relative;flex:1 1 280px}
-input[type=url],input[type=password]{width:100%;padding:15px 44px 15px 16px;font:inherit;color:var(--txt);background:#1c0710cc;border:2px solid var(--line);border-radius:14px;outline:none;transition:border-color .2s,box-shadow .2s}
-input[type=url]:focus,input[type=password]:focus{border-color:var(--b);box-shadow:0 0 0 4px #ff8a0030,0 0 28px #ff1e3c40}
+input[type=url],input[type=password]{width:100%;padding:15px 44px 15px 16px;font:inherit;color:var(--txt);background:color-mix(in srgb,var(--card) 80%,transparent);border:2px solid var(--line);border-radius:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+input[type=url]:focus,input[type=password]:focus{border-color:var(--b);box-shadow:0 0 0 4px color-mix(in srgb,var(--b) 19%,transparent),0 0 28px color-mix(in srgb,var(--a) 25%,transparent)}
 .x{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:50%;background:var(--line);color:#fff;font-size:16px;cursor:pointer;display:none}
 button.go,.dl,.close{font-family:"Metal Mania",cursive;letter-spacing:.05em}
-button.go{position:relative;overflow:hidden;padding:15px 28px;font-size:20px;color:#fff;background:linear-gradient(90deg,var(--a),var(--b));border:0;border-radius:14px;cursor:pointer;text-shadow:0 1px 6px #0008;box-shadow:0 6px 24px #ff1e3c55;transition:transform .15s,box-shadow .2s}
+button.go{position:relative;overflow:hidden;padding:15px 28px;font-size:20px;color:#fff;background:linear-gradient(90deg,var(--a),var(--b));border:0;border-radius:14px;cursor:pointer;text-shadow:0 1px 6px #0008;box-shadow:0 6px 24px color-mix(in srgb,var(--a) 33%,transparent);transition:transform .15s,box-shadow .2s}
 button.go::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,#fff5,transparent);transform:skewX(-20deg);transition:left .5s}
 button.go:hover:not(:disabled)::after{left:130%}
-button.go:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px #ff1e3c88}
+button.go:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px color-mix(in srgb,var(--a) 53%,transparent)}
 button.go:active:not(:disabled){transform:translateY(0)}
-button.pbtn{flex:1;padding:9px 10px;font-family:"Metal Mania",cursive;font-size:16px;letter-spacing:.04em;color:var(--txt);background:#3a0d1c;border:2px solid var(--line);border-radius:10px;cursor:pointer;transition:border-color .2s}
+button.pbtn{flex:1;padding:9px 10px;font-family:"Metal Mania",cursive;font-size:16px;letter-spacing:.04em;color:var(--txt);background:var(--d4);border:2px solid var(--line);border-radius:10px;cursor:pointer;transition:border-color .2s}
 button.pbtn:hover{border-color:var(--b)}
 button.pbtn.main{color:#1a0300;background:linear-gradient(90deg,var(--c),var(--b));border-color:transparent}
 button:disabled{opacity:.6;cursor:wait}
@@ -49,12 +57,12 @@ details input{margin-top:8px;padding-right:16px}
 #msg.err{color:#ff7a8a}
 .spin{display:inline-block;width:16px;height:16px;border:3px solid var(--line);border-top-color:var(--b);border-radius:50%;animation:s .8s linear infinite;vertical-align:-3px;margin-right:8px}
 @keyframes s{to{transform:rotate(360deg)}}
-#res{display:none;background:#1c0710e6;border:2px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 0 50px #ff1e3c30,0 20px 60px #000a;animation:pop .35s ease-out}
+#res{display:none;background:color-mix(in srgb,var(--card) 90%,transparent);border:2px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 0 50px color-mix(in srgb,var(--a) 19%,transparent),0 20px 60px #000a;animation:pop .35s ease-out}
 @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
 video{width:100%;max-height:70vh;background:#000;display:block}
 .info{padding:14px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .info h2{flex:1 1 100%;margin:0;font-size:24px;word-break:break-word}
-.dl{display:inline-block;padding:11px 22px;font-size:19px;color:#1a0300;background:linear-gradient(90deg,var(--c),var(--b));border-radius:12px;text-decoration:none;box-shadow:0 4px 18px #ff8a0044;transition:transform .15s}
+.dl{display:inline-block;padding:11px 22px;font-size:19px;color:#1a0300;background:linear-gradient(90deg,var(--c),var(--b));border-radius:12px;text-decoration:none;box-shadow:0 4px 18px color-mix(in srgb,var(--b) 27%,transparent);transition:transform .15s}
 .dl:hover{transform:translateY(-2px)}
 .close{padding:11px 18px;font-size:19px;color:var(--txt);background:transparent;border:2px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .2s}
 .close:hover{border-color:var(--a)}
@@ -62,9 +70,9 @@ video{width:100%;max-height:70vh;background:#000;display:block}
 .note a{color:var(--c)}
 .size{color:var(--mut);font-size:14px}
 /* background settings */
-#gear{position:fixed;right:14px;bottom:14px;width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:#1c0710ee;color:var(--c);font-size:21px;cursor:pointer;z-index:5;transition:transform .3s,border-color .2s}
+#gear{position:fixed;right:14px;bottom:14px;width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:color-mix(in srgb,var(--card) 93%,transparent);color:var(--c);font-size:21px;cursor:pointer;z-index:5;transition:transform .3s,border-color .2s}
 #gear:hover{transform:rotate(60deg);border-color:var(--b)}
-#panel{position:fixed;right:14px;bottom:70px;width:min(280px,calc(100vw - 28px));padding:16px;background:#1c0710f2;border:2px solid var(--line);border-radius:16px;z-index:5;display:none;box-shadow:0 10px 40px #000a}
+#panel{position:fixed;right:14px;bottom:70px;width:min(280px,calc(100vw - 28px));padding:16px;background:color-mix(in srgb,var(--card) 95%,transparent);border:2px solid var(--line);border-radius:16px;z-index:5;display:none;box-shadow:0 10px 40px #000a}
 #panel h3{margin:0 0 12px;font-family:"Metal Mania",cursive;font-weight:400;font-size:20px;color:var(--c)}
 #panel label{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-top:10px}
 #panel input[type=range]{width:100%;accent-color:var(--b)}
@@ -88,6 +96,7 @@ video{width:100%;max-height:70vh;background:#000;display:block}
     </div>
     <button class="go" id="go">Get Video</button>
   </div>
+  <button class="pbtn main" id="install" type="button" style="display:none;flex:none;margin-top:12px;padding:11px 18px;font-size:18px">📲 Install as App</button>
   <input id="file" type="file" accept="video/*,.mkv,.mov,.m4v,.3gp" hidden>
   <details>
     <summary>Video not loading (403 / blocked)?</summary>
@@ -116,8 +125,9 @@ video{width:100%;max-height:70vh;background:#000;display:block}
   <input id="blur" type="range" min="0" max="24" step="1" value="0">
   <label for="dim"><span>Darkness</span><span id="dmv">0</span></label>
   <input id="dim" type="range" min="0" max="80" step="5" value="0">
-  <div class="row"><span>Video sound</span><input id="snd" type="checkbox" style="accent-color:#ff8a00;width:20px;height:20px"></div>
-  <div class="row"><span>Floating embers</span><input id="emb" type="checkbox" checked style="accent-color:#ff8a00;width:20px;height:20px"></div>
+  <div class="row"><span>Video sound</span><input id="snd" type="checkbox" style="accent-color:var(--b);width:20px;height:20px"></div>
+  <div class="row"><span>Auto colour change (RGB)</span><input id="rgb" type="checkbox" checked style="accent-color:var(--b);width:20px;height:20px"></div>
+  <div class="row"><span>Floating embers</span><input id="emb" type="checkbox" checked style="accent-color:var(--b);width:20px;height:20px"></div>
   <div class="btns" style="margin-top:14px"><button class="pbtn" id="norm" type="button">Normal (reset)</button></div>
 </div>
 
@@ -224,6 +234,25 @@ $('emb').onchange=()=>{store.set('bgEmb',$('emb').checked?'1':'0');$('emb').chec
 $('gear').onclick=()=>{const p=$('panel'),o=p.style.display==='block';p.style.display=o?'none':'block';$('gear').setAttribute('aria-expanded',!o)};
 applyBg();
 
+/* ---- slow automatic colour change (all colours drift around the colour wheel) ---- */
+let hue=+store.get('hue',0),hueTimer=0;
+const root=document.documentElement,themeMeta=document.querySelector('meta[name=theme-color]');
+function setHue(){root.style.setProperty('--h',hue.toFixed(1));themeMeta.content='hsl('+((340+hue)%360).toFixed(0)+',70%,6%)'}
+function startHue(){stopHue();hueTimer=setInterval(()=>{hue=(hue+.5)%360;setHue()},100)}
+function stopHue(){clearInterval(hueTimer);hueTimer=0;store.set('hue',hue.toFixed(1))}
+$('rgb').checked=store.get('bgRgb',reduce?'0':'1')==='1';
+$('rgb').onchange=()=>{store.set('bgRgb',$('rgb').checked?'1':'0');$('rgb').checked?startHue():stopHue()};
+setHue();if($('rgb').checked)startHue();
+addEventListener('pagehide',()=>store.set('hue',hue.toFixed(1)));
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(hueTimer){clearInterval(hueTimer);hueTimer=0}}else if($('rgb').checked&&!hueTimer)startHue()});
+
+/* ---- install as an app (Chrome on phone and PC) ---- */
+let deferred=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;$('install').style.display='inline-block'});
+$('install').onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;$('install').style.display='none'};
+addEventListener('appinstalled',()=>{$('install').style.display='none'});
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+
 let W=0,H=0,D=1,P=[],raf=0;
 function size(){D=Math.min(devicePixelRatio||1,2);W=fx.width=innerWidth*D;H=fx.height=innerHeight*D}
 function mk(init){return{x:Math.random()*W,y:init?Math.random()*H:H+20*D,r:(Math.random()*2.2+.7)*D,v:(Math.random()*.7+.3)*D,s:Math.random()*Math.PI*2,a:Math.random()*.6+.25,h:Math.random()*45+5}}
@@ -233,7 +262,7 @@ function frame(){
     p.y-=p.v;p.s+=.02;p.x+=Math.sin(p.s)*.5*D;
     if(p.y<-20){Object.assign(p,mk(false))}
     const fade=Math.min(1,p.y/(H*.25));
-    cx.fillStyle='hsla('+p.h+',100%,58%,'+(p.a*Math.max(fade,0))+')';
+    cx.fillStyle='hsla('+((p.h+hue)%360)+',100%,58%,'+(p.a*Math.max(fade,0))+')';
     cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.283);cx.fill();
   }
   raf=requestAnimationFrame(frame);

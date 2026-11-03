@@ -47,3 +47,9 @@ PUBLIC SITE ADVICE
 KEEP THE SERVER AWAKE 24 HOURS
 The app pings itself every 4 minutes. For a stronger guarantee make a free monitor on uptimerobot.com
 that opens https://YOUR-APP.onrender.com/health every 5 minutes. (Free Render has 750 hours a month = enough for one app.)
+
+INSTALL AS AN APP
+Open your site in Chrome (phone or PC). Press the "Install as App" button on the page (or Chrome menu > Install app / Add to Home screen). It then opens like a normal app with its own icon.
+
+COLOURS
+All colours drift slowly around the colour wheel by themselves. Gear button > "Auto colour change (RGB)" turns it off.

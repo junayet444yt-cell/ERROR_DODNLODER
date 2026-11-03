@@ -70,14 +70,14 @@ slots = threading.BoundedSemaphore(MAX_JOBS)
 @app.after_request
 def security_headers(r):
     r.headers["X-Content-Type-Options"] = "nosniff"
-    if request.path in ("/", "/api/status"):
+    if request.path in ("/", "/api/status", "/sw.js", "/manifest.webmanifest"):
         r.headers["Cache-Control"] = "no-cache"
     r.headers["Referrer-Policy"] = "no-referrer"
     r.headers["X-Frame-Options"] = "DENY"
     r.headers["Content-Security-Policy"] = (
         "default-src 'self'; script-src 'self' 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; "
-        "img-src 'self' data: blob: https:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'")
+        "img-src 'self' data: blob: https:; media-src 'self' blob:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'")
     return r
 
 
@@ -304,6 +304,25 @@ def run_ydl(url, vid, headers=None):
 @app.route("/")
 def index():
     return send_from_directory("static", "index.html")
+
+
+@app.route("/manifest.webmanifest")
+def manifest():
+    return send_from_directory("static", "manifest.webmanifest", mimetype="application/manifest+json")
+
+
+@app.route("/sw.js")
+def service_worker():
+    r = send_from_directory("static", "sw.js", mimetype="application/javascript")
+    r.headers["Service-Worker-Allowed"] = "/"
+    return r
+
+
+@app.route("/icons/<path:name>")
+def icons(name):
+    r = send_from_directory(os.path.join("static", "icons"), name)
+    r.headers["Cache-Control"] = "public, max-age=86400"
+    return r
 
 
 @app.route("/health")
