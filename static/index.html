@@ -38,6 +38,7 @@ p.sub{color:var(--mut);margin:0 0 24px;font-size:17px}
 .field{position:relative;flex:1 1 280px}
 input[type=url],input[type=password]{width:100%;padding:15px 44px 15px 16px;font:inherit;color:var(--txt);background:color-mix(in srgb,var(--card) 80%,transparent);border:2px solid var(--line);border-radius:14px;outline:none;transition:border-color .2s,box-shadow .2s}
 input[type=url]:focus,input[type=password]:focus{border-color:var(--b);box-shadow:0 0 0 4px color-mix(in srgb,var(--b) 19%,transparent),0 0 28px color-mix(in srgb,var(--a) 25%,transparent)}
+.hint{margin:10px 2px 0;font-size:15px;color:var(--c);text-shadow:0 1px 8px #000c}
 .x{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:50%;background:var(--line);color:#fff;font-size:16px;cursor:pointer;display:none}
 button.go,.dl,.close{font-family:"Metal Mania",cursive;letter-spacing:.05em}
 button.go{position:relative;overflow:hidden;padding:15px 28px;font-size:20px;color:#fff;background:linear-gradient(90deg,var(--a),var(--b));border:0;border-radius:14px;cursor:pointer;text-shadow:0 1px 6px #0008;box-shadow:0 6px 24px color-mix(in srgb,var(--a) 33%,transparent);transition:transform .15s,box-shadow .2s}
@@ -96,6 +97,7 @@ video{width:100%;max-height:70vh;background:#000;display:block}
     </div>
     <button class="go" id="go">Get Video</button>
   </div>
+  <p class="hint">Instagram, TikTok and 18+ content download</p>
   <button class="pbtn main" id="install" type="button" style="display:none;flex:none;margin-top:12px;padding:11px 18px;font-size:18px">📲 Install as App</button>
   <input id="file" type="file" accept="video/*,.mkv,.mov,.m4v,.3gp" hidden>
   <details>
