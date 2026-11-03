@@ -53,3 +53,6 @@ Open your site in Chrome (phone or PC). Press the "Install as App" button on the
 
 COLOURS
 All colours drift slowly around the colour wheel by themselves. Gear button > "Auto colour change (RGB)" turns it off.
+
+X (TWITTER) VIDEOS
+For x.com / twitter.com links the app first asks FxTwitter, then VxTwitter (no login needed), then yt-dlp. These are third-party services: the tweet link is sent to them and they can change or stop working. If cookies.txt / COOKIES_B64 is present, yt-dlp is tried first and the services second. 18+ posts may still need your own cookies.

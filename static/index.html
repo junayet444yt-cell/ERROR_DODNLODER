@@ -104,6 +104,7 @@ video{width:100%;max-height:70vh;background:#000;display:block}
 --a:hsl(calc(352 + var(--h)) 72% 47%);--b:hsl(calc(30 + var(--h)) 78% 46%);--c:hsl(calc(44 + var(--h)) 62% 64%);
 --d1:hsl(calc(350 + var(--h)) 62% 15%);--d2:hsl(calc(28 + var(--h)) 70% 13%);--d3:hsl(calc(325 + var(--h)) 58% 10%);--d4:hsl(calc(340 + var(--h)) 45% 11%)}
 html{background:#060103;scroll-behavior:smooth}
+html,body{overscroll-behavior-y:contain}
 ::selection{background:color-mix(in srgb,var(--a) 45%,transparent);color:#fff}
 *{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 #bg{background:radial-gradient(900px 520px at 8% -10%,var(--d1) 0,transparent 62%),radial-gradient(800px 520px at 100% 0,var(--d2) 0,transparent 58%),radial-gradient(700px 420px at 50% 112%,var(--d3) 0,transparent 62%),#060103}
@@ -238,15 +239,15 @@ let timer=null;
 function say(t,err,spin){msg.className=err?'err':'';msg.textContent='';if(spin){const s=document.createElement('span');s.className='spin';msg.appendChild(s)}msg.appendChild(document.createTextNode(t||''))}
 const pst=$('pst');
 function sync(){const has=!!url.value;clr.style.display=has?'block':'none';pst.style.display=has?'none':'block'}
-url.addEventListener('input',sync);sync();
-clr.onclick=()=>{url.value='';sync();url.focus()};
-pst.onclick=async()=>{try{const t=(await navigator.clipboard.readText()||'').trim();if(t){url.value=t;sync();url.focus()}else{say('Clipboard is empty.',true)}}catch(e){url.focus();say('Long-press the box and choose Paste.',true)}};
+url.addEventListener('input',()=>{sync();store.set('evdUrl',url.value)});sync();
+clr.onclick=()=>{url.value='';store.set('evdUrl','');sync();url.focus()};
+pst.onclick=async()=>{try{const t=(await navigator.clipboard.readText()||'').trim();if(t){url.value=t;store.set('evdUrl',t);sync();url.focus()}else{say('Clipboard is empty.',true)}}catch(e){url.focus();say('Long-press the box and choose Paste.',true)}};
 
 function closeVideo(){
   vid.pause();vid.removeAttribute('src');vid.removeAttribute('poster');vid.load();
   $('res').style.display='none';
 }
-$('cls').onclick=()=>{closeVideo();say('')};
+$('cls').onclick=()=>{closeVideo();say('');store.set('evdLast','')};
 
 vid.addEventListener('error',()=>{
   if(!vid.getAttribute('src'))return;
@@ -263,6 +264,12 @@ document.addEventListener('pointerdown',e=>{
 });
 
 /* ---- link downloader ---- */
+function showRes(d){
+  vid.src='/media/'+d.id; if(d.thumbnail) vid.poster=d.thumbnail;
+  $('ttl').textContent=d.title; $('dl').style.display=''; $('dl').href='/media/'+d.id+'?dl=1';
+  $('sz').textContent=(d.size/1048576).toFixed(1)+' MB';
+  $('res').style.display='block';
+}
 async function run(){
   const u=url.value.trim(); if(!u){say('Paste a link first',true);return}
   closeVideo(); go.disabled=true; $('bar').classList.add('on');
@@ -273,10 +280,8 @@ async function run(){
     if(r.status===401){$('lock').style.display='grid';say('');return}
     let d={}; try{d=await r.json()}catch(e){throw new Error(r.status===502||r.status===504?'The server is waking up or busy. Wait 30 seconds and try again.':'Something went wrong')}
     if(!r.ok) throw new Error(d.error||'Something went wrong');
-    vid.src='/media/'+d.id; if(d.thumbnail) vid.poster=d.thumbnail;
-    $('ttl').textContent=d.title; $('dl').style.display=''; $('dl').href='/media/'+d.id+'?dl=1';
-    $('sz').textContent=(d.size/1048576).toFixed(1)+' MB';
-    $('res').style.display='block'; say('');
+    showRes(d); say('');
+    store.set('evdLast',JSON.stringify({id:d.id,title:d.title,thumbnail:d.thumbnail,size:d.size,t:Date.now()}));
     $('res').scrollIntoView({behavior:'smooth'});
   }catch(e){say(e.message,true)}
   finally{clearInterval(timer);go.disabled=false;$('bar').classList.remove('on')}
@@ -339,15 +344,18 @@ $('gear').onclick=()=>{const p=$('panel'),o=p.style.display==='block';p.style.di
 applyBg();
 
 /* ---- slow automatic colour change (all colours drift around the colour wheel) ---- */
-let hue=+store.get('hue',0),hueTimer=0;
+let hueT=+store.get('hueT',0),hueTimer=0,hue=0;
 const root=document.documentElement,themeMeta=document.querySelector('meta[name=theme-color]');
-function setHue(){root.style.setProperty('--h',hue.toFixed(1));themeMeta.content='hsl('+((340+hue)%360).toFixed(0)+',70%,6%)'}
-function startHue(){stopHue();hueTimer=setInterval(()=>{hue=(hue+.3)%360;setHue()},100)}
-function stopHue(){clearInterval(hueTimer);hueTimer=0;store.set('hue',hue.toFixed(1))}
+const HUE_PERIOD=80; /* seconds for one full there-and-back sweep */
+function setHue(){root.style.setProperty('--h',hue.toFixed(2));themeMeta.content='hsl('+((340+hue+360)%360).toFixed(0)+',55%,5%)'}
+/* the colours sway smoothly between violet/wine and warm orange (never green/cyan), updated once per second in tiny steps */
+function stepHue(){hueT+=1;hue=-20+60*Math.sin(2*Math.PI*hueT/HUE_PERIOD);setHue()}
+function startHue(){stopHue();hueTimer=setInterval(()=>{if(!vid.paused&&!vid.ended)return;stepHue()},1000)}
+function stopHue(){clearInterval(hueTimer);hueTimer=0;store.set('hueT',hueT)}
 $('rgb').checked=store.get('bgRgb',reduce?'0':'1')==='1';
 $('rgb').onchange=()=>{store.set('bgRgb',$('rgb').checked?'1':'0');$('rgb').checked?startHue():stopHue()};
-setHue();if($('rgb').checked)startHue();
-addEventListener('pagehide',()=>store.set('hue',hue.toFixed(1)));
+stepHue();if($('rgb').checked)startHue();
+addEventListener('pagehide',()=>store.set('hueT',hueT));
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(hueTimer){clearInterval(hueTimer);hueTimer=0}}else if($('rgb').checked&&!hueTimer)startHue()});
 
 /* ---- install as an app (Chrome on phone and PC) ---- */
@@ -376,6 +384,20 @@ function stopFx(){cancelAnimationFrame(raf);raf=0;cx.clearRect(0,0,W,H)}
 addEventListener('resize',()=>{if(raf)startFx()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0}else if($('emb').checked&&!raf)startFx()});
 if($('emb').checked)startFx();
+vid.addEventListener('play',()=>{if(raf)stopFx()});
+vid.addEventListener('pause',()=>{if($('emb').checked&&!raf&&!document.hidden)startFx()});
+vid.addEventListener('ended',()=>{if($('emb').checked&&!raf&&!document.hidden)startFx()});
+
+/* ---- if the page ever reloads by itself, bring back the link and the video ---- */
+(function restore(){
+  const u=store.get('evdUrl','');if(u){url.value=u;sync()}
+  try{
+    const l=JSON.parse(store.get('evdLast','')||'null');
+    if(l&&l.id&&Date.now()-l.t<20*60*1000){
+      fetch('/media/'+l.id,{method:'HEAD'}).then(r=>{if(r.ok)showRes(l)}).catch(()=>{});
+    }
+  }catch(e){}
+})();
 </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 ERROR HUB DOWNLODER - public-ready version.
 Paste a video link -> the server fetches it -> the video plays in the page and can be downloaded.
 """
-import os, re, glob, time, uuid, base64, socket, secrets, hmac, hashlib, ipaddress, mimetypes, threading
+import os, re, json, glob, time, uuid, base64, socket, secrets, hmac, hashlib, ipaddress, mimetypes, threading
 from functools import wraps
 from urllib.parse import urlparse, urljoin
 
@@ -184,7 +184,10 @@ if SELF_URL:
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 DIGITS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 PACKED = re.compile(r"\}\('((?:[^'\\]|\\.)*)',(\d+),(\d+),'((?:[^'\\]|\\.)*)'\.split\('\|'\)")
-MEDIA = re.compile(r"https?:(?:\\?/){2}[^\s\"'<>]+?\.(?:m3u8|mp4)(?:\?[^\s\"'<>]*)?", re.I)
+MEDIA = re.compile(r"https?:(?:\\?/){2}[^\s\"'<>]+?\.(?:m3u8|mp4|webm|mov)(?:\?[^\s\"'<>]*)?", re.I)
+# player settings such as  video_url: '...'   "file":"..."   contentUrl   hlsUrl   <source src=...>
+KEYED = re.compile(r"(?:video_url|video_alt_url\d*|contentUrl|content_url|hlsUrl|hls|mp4|file|src|source|stream|url)[\"']?\s*[:=]\s*[\"']((?:function/\d+/)?https?://[^\"'\s<>]+)", re.I)
+BAD_EXT = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".js", ".css", ".vtt", ".srt", ".json", ".html", ".php", ".ico", ".woff", ".woff2")
 
 
 def unpack(src):
@@ -254,11 +257,16 @@ def find_media(url, referer=None, depth=0, seen=None):
     for rel in re.findall(r"[\"'(]([^\"'()\s]+\.(?:m3u8|mp4)(?:\?[^\"'()\s]*)?)[\"')]", text, re.I):
         if not rel.lower().startswith("http"):
             found.append(urljoin(url, rel))
+    for k in KEYED.findall(text):
+        k = re.sub(r"^function/\d+/", "", k).rstrip("/")
+        path = urlparse(k).path.lower()
+        if not path.endswith(BAD_EXT) and re.search(r"\.(?:mp4|m3u8|webm|mov)|get_file|/video|/stream|/media", k, re.I):
+            found.append(k)
     found = [u for u in dict.fromkeys(found) if url_is_safe(u)]
-    found.sort(key=lambda u: 0 if ".m3u8" in u.lower() else 1)
+    found.sort(key=lambda u: 0 if ".m3u8" in u.lower() else (1 if ".mp4" in u.lower() else 2))
     if found:
         return [(u, url) for u in found[:4]]
-    for src in re.findall(r"<iframe[^>]+src=[\"']([^\"']+)", html, re.I)[:3]:
+    for src in re.findall(r"<iframe[^>]+(?:data-src|src)=[\"']([^\"']+)", html, re.I)[:4]:
         src = urljoin(url, src)
         if src.startswith("http") and url_is_safe(src):
             try:
@@ -268,6 +276,88 @@ def find_media(url, referer=None, depth=0, seen=None):
             except Exception:
                 pass
     return []
+
+
+# ---------- X (Twitter): ask FxTwitter, then VxTwitter (no login needed), then yt-dlp ----------
+# These are third-party services: the tweet link is sent to them. They can change or stop working at any time.
+X_TWEET = re.compile(r"(?:^|\.)(?:x|twitter)\.com/([^/?#]+)/status(?:es)?/(\d+)", re.I)
+
+
+def is_x(url):
+    host = (urlparse(url).hostname or "").lower()
+    return host in ("x.com", "twitter.com") or host.endswith((".x.com", ".twitter.com"))
+
+
+def x_lookup(url):
+    """Return (video_url, title, thumbnail, duration) for the first video of a tweet, or raise."""
+    m = X_TWEET.search((urlparse(url).hostname or "") + urlparse(url).path)
+    if not m:
+        raise RuntimeError("not a tweet link")
+    user, tid = m.group(1), m.group(2)
+    last = "no lookup service answered"
+    for api in ("https://api.fxtwitter.com/%s/status/%s", "https://api.vxtwitter.com/%s/status/%s"):
+        try:
+            code, text = page_get(api % (user, tid))
+            if code >= 400 or not text:
+                last = "lookup service answered HTTP %s" % code
+                continue
+            data = json.loads(text)
+        except Exception as e:
+            last = str(e)[:100]
+            continue
+        cands = []
+        tw = data.get("tweet") or {}
+        if tw:  # FxTwitter
+            for t in (tw, tw.get("quote") or {}):
+                for v in ((t.get("media") or {}).get("videos") or []):
+                    cands.append((v.get("url"), (t.get("text") or "")[:90], v.get("thumbnail_url"), v.get("duration")))
+        else:  # VxTwitter
+            for v in (data.get("media_extended") or []):
+                if v.get("type") in ("video", "gif"):
+                    cands.append((v.get("url"), (data.get("text") or "")[:90], v.get("thumbnail_url"), (v.get("duration_millis") or 0) / 1000 or None))
+        for u, title, thumb, dur in cands:
+            if u and urlparse(u).hostname and urlparse(u).hostname.endswith("twimg.com"):  # only Twitter's own video servers
+                return u, title or "X video", thumb, dur
+        last = "this post has no video (or X hides it from the lookup services)"
+    raise RuntimeError(last)
+
+
+def download_direct(url, vid, referer="https://x.com/"):
+    import urllib.request
+    handlers = [urllib.request.ProxyHandler({"http": PROXY, "https": PROXY})] if PROXY else []
+    h = {"User-Agent": UA, "Referer": referer}
+    p = urlparse(referer)
+    if p.scheme and p.netloc:
+        h["Origin"] = p.scheme + "://" + p.netloc
+    r = urllib.request.build_opener(*handlers).open(urllib.request.Request(url, headers=h), timeout=30)
+    if not url_is_safe(r.geturl()):
+        raise RuntimeError("blocked redirect")
+    ctype = (r.headers.get_content_type() or "").lower()
+    if not (ctype.startswith("video/") or ctype in ("application/octet-stream", "application/mp4", "binary/octet-stream")):
+        raise RuntimeError("link is not a video file (%s)" % ctype)
+    path = os.path.join(CACHE, vid + ".mp4")
+    total, limit = 0, MAX_MB * 1024 * 1024
+    try:
+        with open(path, "wb") as f:
+            while True:
+                chunk = r.read(512 * 1024)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > limit:
+                    raise RuntimeError("video is bigger than the %d MB limit" % MAX_MB)
+                f.write(chunk)
+    except Exception:
+        if os.path.exists(path):
+            os.remove(path)
+        raise
+    return path
+
+
+def x_download(url, vid):
+    u, title, thumb, dur = x_lookup(url)
+    download_direct(u, vid)
+    return {"title": title, "thumbnail": thumb, "duration": dur, "extractor_key": "Twitter"}
 
 
 def run_ydl(url, vid, headers=None):
@@ -377,17 +467,37 @@ def fetch():
     try:
         vid = uuid.uuid4().hex[:12]
         info, err = None, None
-        try:
-            info = run_ydl(url, vid, {"Referer": ref_in} if ref_in else None)
-        except Exception as e:
-            err = e
+        if is_x(url) and not os.path.exists(COOKIES):  # no login cookies: the lookup services are the best first try
+            try:
+                info = x_download(url, vid)
+            except Exception as e:
+                err = e
+        if info is None:
+            try:
+                info = run_ydl(url, vid, {"Referer": ref_in} if ref_in else None)
+            except Exception as e:
+                err = e
+        if info is None and is_x(url) and os.path.exists(COOKIES):  # cookies were tried first, now the services
+            try:
+                info = x_download(url, vid)
+            except Exception as e:
+                err = err or e
         if info is None:  # fallback: dig the real video link out of the page
             try:
                 for direct, ref in find_media(url, ref_in or None):
+                    drop(vid)  # clear any half-written file from the previous try
                     if BLOCKED and is_blocked(direct):
                         continue
+                    p = urlparse(ref)
+                    if ".m3u8" not in direct.lower():
+                        try:
+                            download_direct(direct, vid, ref)
+                            info = {"title": (urlparse(ref).path.strip("/").split("/")[-1] or "video").replace("-", " ")[:80],
+                                    "thumbnail": None, "duration": None, "extractor_key": "Direct"}
+                            break
+                        except Exception as e4:
+                            err = e4
                     try:
-                        p = urlparse(ref)
                         info = run_ydl(direct, vid, {"Referer": ref, "Origin": p.scheme + "://" + p.netloc})
                         break
                     except Exception as e3:
@@ -430,6 +540,7 @@ def media(vid):
     item = files.get(vid)
     if not item or not os.path.exists(item["path"]):
         return "File expired. Paste the link again.", 404
+    item["ts"] = time.time()  # still in use: keep it
     ext = os.path.splitext(item["path"])[1]
     safe = "".join(c for c in item["title"] if c not in '\\/:*?"<>|').strip() or "video"
     return send_file(item["path"], mimetype=mimetypes.guess_type(item["path"])[0] or "video/mp4",
