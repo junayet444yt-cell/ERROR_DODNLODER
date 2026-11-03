@@ -96,12 +96,73 @@ video{width:100%;max-height:70vh;background:#000;display:block}
 #lock{position:fixed;inset:0;background:var(--bg);display:none;place-items:center;padding:20px;z-index:9}
 #lock div{max-width:340px;width:100%}
 @media (prefers-reduced-motion:reduce){.spin,h1,#res{animation:none}}
+
+/* ===== v12: calmer, darker colours + advanced glass UI (this block overrides the rules above) ===== */
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+:root{--bg:#060103;--txt:#f1e4dd;
+--card:hsl(calc(340 + var(--h)) 55% 6%);--line:hsl(calc(345 + var(--h)) 40% 17%);--mut:hsl(calc(14 + var(--h)) 30% 68%);
+--a:hsl(calc(352 + var(--h)) 72% 47%);--b:hsl(calc(30 + var(--h)) 78% 46%);--c:hsl(calc(44 + var(--h)) 62% 64%);
+--d1:hsl(calc(350 + var(--h)) 62% 15%);--d2:hsl(calc(28 + var(--h)) 70% 13%);--d3:hsl(calc(325 + var(--h)) 58% 10%);--d4:hsl(calc(340 + var(--h)) 45% 11%)}
+html{background:#060103;scroll-behavior:smooth}
+::selection{background:color-mix(in srgb,var(--a) 45%,transparent);color:#fff}
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+#bg{background:radial-gradient(900px 520px at 8% -10%,var(--d1) 0,transparent 62%),radial-gradient(800px 520px at 100% 0,var(--d2) 0,transparent 58%),radial-gradient(700px 420px at 50% 112%,var(--d3) 0,transparent 62%),#060103}
+.brand .dev{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--a) 30%,transparent))}
+.brand .ang{background:linear-gradient(180deg,#f4ecd8,#e6d3a2 55%,#c9a964);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 5px #f4e6b855)}
+.brand .ang::after{background:linear-gradient(90deg,var(--a),#e8dcc0 45%,transparent)}
+p.sub{color:var(--mut)}
+.hint{color:var(--c);text-shadow:none;opacity:.9}
+/* glass card */
+.glass{position:relative;border-radius:22px;padding:18px;border:1px solid rgba(255,255,255,.07);
+background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012)),color-mix(in srgb,var(--card) 66%,transparent);
+-webkit-backdrop-filter:blur(16px) saturate(1.15);backdrop-filter:blur(16px) saturate(1.15);
+box-shadow:0 18px 48px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06)}
+.glass::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;
+background:conic-gradient(from var(--ang),transparent 0 68%,color-mix(in srgb,var(--b) 65%,transparent) 84%,transparent 100%);
+-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spinb 9s linear infinite}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;
+background:radial-gradient(280px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.065),transparent 62%)}
+.glass:hover::after{opacity:1}
+@keyframes spinb{to{--ang:360deg}}
+#res.glass{padding:0;overflow:hidden;border:1px solid rgba(255,255,255,.07)}
+#res.glass .info{padding:14px 18px 16px}
+#res video{border-radius:0}
+input[type=url],input[type=password]{background:rgba(0,0,0,.34);border:1px solid rgba(255,255,255,.1);border-radius:14px}
+input[type=url]:focus,input[type=password]:focus{border-color:color-mix(in srgb,var(--b) 80%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--b) 16%,transparent)}
+#url{padding-right:84px}
+.pst{position:absolute;right:8px;top:50%;transform:translateY(-50%);padding:6px 12px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.06);color:var(--c);font:600 13px "Chakra Petch",system-ui,sans-serif;cursor:pointer;transition:background .2s,border-color .2s}
+.pst:hover{background:rgba(255,255,255,.12);border-color:color-mix(in srgb,var(--b) 60%,transparent)}
+.x{background:rgba(255,255,255,.1)}
+/* buttons: softer light, with ripple */
+button.go,.dl,.discord{position:relative;overflow:hidden}
+button.go{background:linear-gradient(135deg,var(--a),var(--b));box-shadow:0 4px 14px color-mix(in srgb,var(--a) 28%,transparent);text-shadow:0 1px 3px #0006;border-radius:14px}
+button.go:hover:not(:disabled){box-shadow:0 8px 20px color-mix(in srgb,var(--a) 38%,transparent)}
+.dl{background:linear-gradient(135deg,var(--c),var(--b));box-shadow:0 3px 12px color-mix(in srgb,var(--b) 25%,transparent)}
+button.pbtn.main{background:linear-gradient(135deg,var(--c),var(--b))}
+.discord{box-shadow:0 3px 12px #5865f255,inset 0 1px 0 #ffffff30}
+.discord:hover{box-shadow:0 6px 18px #5865f288,inset 0 1px 0 #ffffff40}
+.discord.facebook{box-shadow:0 3px 12px #1877f255,inset 0 1px 0 #ffffff30}
+.discord.facebook:hover{box-shadow:0 6px 18px #1877f288,inset 0 1px 0 #ffffff40}
+.rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.32);transform:scale(0);animation:rip .6s ease-out forwards;pointer-events:none}
+@keyframes rip{to{transform:scale(1);opacity:0}}
+button:active:not(:disabled),.dl:active{transform:scale(.97)}
+/* progress bar */
+.bar{height:3px;border-radius:3px;margin-top:14px;background:rgba(255,255,255,.06);overflow:hidden;opacity:0;transition:opacity .3s}
+.bar.on{opacity:1}
+.bar i{display:block;height:100%;width:38%;border-radius:3px;background:linear-gradient(90deg,transparent,var(--b),var(--a),transparent);animation:slide 1.3s ease-in-out infinite}
+@keyframes slide{from{transform:translateX(-110%)}to{transform:translateX(280%)}}
+#gear,#panel{background:color-mix(in srgb,var(--card) 82%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1)}
+#panel{border-radius:18px;box-shadow:0 14px 40px rgba(0,0,0,.55)}
+/* one orchestrated entrance */
+.rv{opacity:0;transform:translateY(12px);animation:rv .65s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--i,0) * 90ms)}
+@keyframes rv{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;animation:none}.glass::before,.bar i,.brand .dev{animation:none}}
 </style>
 </head>
 <body>
 <div id="bg"><video id="bgv" muted loop playsinline autoplay></video><div id="shade"></div><canvas id="fx"></canvas></div>
 <main>
-  <header class="top">
+  <header class="top rv" style="--i:0">
     <h1 class="brand" aria-label="ERROR HUB DOWNLODER"><span class="dev">ERROR HUB</span><span class="ang">DOWNLODER</span></h1>
   <div class="social">
     <a class="discord" href="https://discord.gg/ugwfaHSH3" target="_blank" rel="noopener noreferrer" aria-label="Join our Discord server">
@@ -114,10 +175,12 @@ video{width:100%;max-height:70vh;background:#000;display:block}
     </a>
     </div>
   </header>
-  <p class="sub">Paste any video link. The video plays below, and you can download it.</p>
+  <p class="sub rv" style="--i:1">Paste any video link. The video plays below, and you can download it.</p>
+  <section class="glass rv" id="card" style="--i:2">
   <div class="box">
     <div class="field">
       <input id="url" type="url" placeholder="Paste video link here" autocomplete="off" aria-label="Video link">
+      <button class="pst" id="pst" type="button" aria-label="Paste from clipboard">Paste</button>
       <button class="x" id="clr" aria-label="Clear link">✕</button>
     </div>
     <button class="go" id="go">Get Video</button>
@@ -129,8 +192,10 @@ video{width:100%;max-height:70vh;background:#000;display:block}
     <summary>Video not loading (403 / blocked)?</summary>
     <input id="ref" type="url" placeholder="Embedded on: page link where this video is shown" autocomplete="off" aria-label="Embedded on page link">
   </details>
+  <div class="bar" id="bar" aria-hidden="true"><i></i></div>
+  </section>
   <div id="msg" role="status"></div>
-  <section id="res">
+  <section id="res" class="glass">
     <video id="vid" controls playsinline></video>
     <div class="info">
       <h2 id="ttl"></h2>
@@ -139,7 +204,7 @@ video{width:100%;max-height:70vh;background:#000;display:block}
       <span class="size" id="sz"></span>
     </div>
   </section>
-  <p class="note"><span id="rule">Only download videos you own or have permission to save.</span> Videos are deleted from the server after a short time.<span id="contact"></span></p>
+  <p class="note rv" style="--i:4"><span id="rule">Only download videos you own or have permission to save.</span> Videos are deleted from the server after a short time.<span id="contact"></span></p>
 </main>
 
 <button id="gear" aria-label="Background settings" aria-expanded="false">⚙</button>
@@ -171,8 +236,11 @@ const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}ca
 let timer=null;
 
 function say(t,err,spin){msg.className=err?'err':'';msg.textContent='';if(spin){const s=document.createElement('span');s.className='spin';msg.appendChild(s)}msg.appendChild(document.createTextNode(t||''))}
-url.addEventListener('input',()=>clr.style.display=url.value?'block':'none');
-clr.onclick=()=>{url.value='';clr.style.display='none';url.focus()};
+const pst=$('pst');
+function sync(){const has=!!url.value;clr.style.display=has?'block':'none';pst.style.display=has?'none':'block'}
+url.addEventListener('input',sync);sync();
+clr.onclick=()=>{url.value='';sync();url.focus()};
+pst.onclick=async()=>{try{const t=(await navigator.clipboard.readText()||'').trim();if(t){url.value=t;sync();url.focus()}else{say('Clipboard is empty.',true)}}catch(e){url.focus();say('Long-press the box and choose Paste.',true)}};
 
 function closeVideo(){
   vid.pause();vid.removeAttribute('src');vid.removeAttribute('poster');vid.load();
@@ -185,10 +253,19 @@ vid.addEventListener('error',()=>{
   say("The browser can't play this format. Use the Download button instead.",true);
 });
 
+/* ---- advanced UI: cursor spotlight on glass cards, button ripple ---- */
+document.querySelectorAll('.glass').forEach(g=>g.addEventListener('pointermove',e=>{const r=g.getBoundingClientRect();g.style.setProperty('--mx',(e.clientX-r.left)+'px');g.style.setProperty('--my',(e.clientY-r.top)+'px')}));
+document.addEventListener('pointerdown',e=>{
+  const b=e.target.closest('button.go,.dl,.discord');if(!b||b.disabled)return;
+  const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,i=document.createElement('span');
+  i.className='rip';i.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-r.left-d/2)+'px;top:'+(e.clientY-r.top-d/2)+'px';
+  b.appendChild(i);setTimeout(()=>i.remove(),650);
+});
+
 /* ---- link downloader ---- */
 async function run(){
   const u=url.value.trim(); if(!u){say('Paste a link first',true);return}
-  closeVideo(); go.disabled=true;
+  closeVideo(); go.disabled=true; $('bar').classList.add('on');
   let sec=0; const tick=()=>say('Getting the video… '+sec+'s (big videos can take a while)',false,true);
   tick(); timer=setInterval(()=>{sec++;tick()},1000);
   try{
@@ -202,7 +279,7 @@ async function run(){
     $('res').style.display='block'; say('');
     $('res').scrollIntoView({behavior:'smooth'});
   }catch(e){say(e.message,true)}
-  finally{clearInterval(timer);go.disabled=false}
+  finally{clearInterval(timer);go.disabled=false;$('bar').classList.remove('on')}
 }
 go.onclick=run; url.addEventListener('keydown',e=>{if(e.key==='Enter')run()});
 async function login(){
@@ -226,12 +303,12 @@ function applyBg(){
   bgv.style.opacity=o/100;$('shade').style.opacity=d/100;
   bg.style.setProperty('--bf',b?'blur('+b+'px)':'none');
   bg.classList.toggle('blur',b>0);
-  store.set('bgBlur',b);store.set('bgDim',d);store.set('bgOp',o);
+  store.set('bgBlur',b);store.set('bgDim2',d);store.set('bgOp',o);
 }
-$('blur').value=store.get('bgBlur',0);$('dim').value=store.get('bgDim',0);$('vop').value=store.get('bgOp',100);
+$('blur').value=store.get('bgBlur',0);$('dim').value=store.get('bgDim2',20);$('vop').value=store.get('bgOp',100);
 $('emb').checked=store.get('bgEmb',reduce?'0':'1')==='1';
 $('blur').oninput=$('dim').oninput=$('vop').oninput=applyBg;
-$('norm').onclick=()=>{$('blur').value=0;$('dim').value=0;$('vop').value=100;applyBg()};
+$('norm').onclick=()=>{$('blur').value=0;$('dim').value=20;$('vop').value=100;applyBg()};
 
 /* background video: picked from your device, kept in the browser (IndexedDB) so it stays after reload. Nothing is uploaded. */
 const idb={db:null,
@@ -265,7 +342,7 @@ applyBg();
 let hue=+store.get('hue',0),hueTimer=0;
 const root=document.documentElement,themeMeta=document.querySelector('meta[name=theme-color]');
 function setHue(){root.style.setProperty('--h',hue.toFixed(1));themeMeta.content='hsl('+((340+hue)%360).toFixed(0)+',70%,6%)'}
-function startHue(){stopHue();hueTimer=setInterval(()=>{hue=(hue+.5)%360;setHue()},100)}
+function startHue(){stopHue();hueTimer=setInterval(()=>{hue=(hue+.3)%360;setHue()},100)}
 function stopHue(){clearInterval(hueTimer);hueTimer=0;store.set('hue',hue.toFixed(1))}
 $('rgb').checked=store.get('bgRgb',reduce?'0':'1')==='1';
 $('rgb').onchange=()=>{store.set('bgRgb',$('rgb').checked?'1':'0');$('rgb').checked?startHue():stopHue()};
@@ -282,14 +359,14 @@ if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWor
 
 let W=0,H=0,D=1,P=[],raf=0;
 function size(){D=Math.min(devicePixelRatio||1,2);W=fx.width=innerWidth*D;H=fx.height=innerHeight*D}
-function mk(init){return{x:Math.random()*W,y:init?Math.random()*H:H+20*D,r:(Math.random()*2.2+.7)*D,v:(Math.random()*.7+.3)*D,s:Math.random()*Math.PI*2,a:Math.random()*.6+.25,h:Math.random()*45+5}}
+function mk(init){return{x:Math.random()*W,y:init?Math.random()*H:H+20*D,r:(Math.random()*2.2+.7)*D,v:(Math.random()*.7+.3)*D,s:Math.random()*Math.PI*2,a:Math.random()*.4+.12,h:Math.random()*45+5}}
 function frame(){
   cx.clearRect(0,0,W,H);cx.globalCompositeOperation='lighter';
   for(const p of P){
     p.y-=p.v;p.s+=.02;p.x+=Math.sin(p.s)*.5*D;
     if(p.y<-20){Object.assign(p,mk(false))}
     const fade=Math.min(1,p.y/(H*.25));
-    cx.fillStyle='hsla('+((p.h+hue)%360)+',100%,58%,'+(p.a*Math.max(fade,0))+')';
+    cx.fillStyle='hsla('+((p.h+hue)%360)+',85%,52%,'+(p.a*Math.max(fade,0))+')';
     cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.283);cx.fill();
   }
   raf=requestAnimationFrame(frame);
