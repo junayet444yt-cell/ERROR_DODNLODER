@@ -5,7 +5,7 @@ WHAT IT DOES
 Paste a video link -> the video appears and plays -> Download button saves it.
 Works with most sites (TikTok, Twitter/X, embed players, direct .mp4/.m3u8 links ...).
 Instagram videos/reels work (add cookies, see below). YouTube and Facebook are blocked (BLOCKED_SITES setting).
-You can also press "Add Video" to play a video from your own device (it is not uploaded anywhere).
+Gear button (bottom right) > "Add background video" plays a video from your own device behind the page (not uploaded anywhere).
 Background: gear button (bottom right) = blur slider, darkness and floating embers.
 
 DEPLOY ON RENDER
@@ -17,12 +17,12 @@ DEPLOY ON RENDER
 
 SETTINGS (Render > Environment, all optional)
 ACCESS_PASSWORD  password (empty = public)
-MAX_MB           biggest video, default 300
-MAX_MINUTES      longest video, default 60
+MAX_MB           biggest video in MB, default 2048 (2 GB)
+MAX_MINUTES      longest video in minutes, default 300
 RATE_MAX         requests per visitor per 10 minutes, default 8
 KEEP_MINUTES     how long videos stay on the server, default 20
 MAX_JOBS         downloads at the same time, default 2
-MAX_CACHE_MB     total disk for saved videos, default 1500
+MAX_CACHE_MB     total disk for saved videos, default 4500
 CONTACT_EMAIL    shown in the page footer (good for a public site)
 PROXY_URL        proxy for sites that block the server, e.g. socks5://user:pass@host:port
 BLOCKED_SITES   comma list of blocked sites, "none" = block nothing (add instagram.com to block it)

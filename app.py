@@ -17,10 +17,10 @@ except Exception:
 
 # ---------- settings (all can be changed with Environment Variables on Render) ----------
 PASSWORD = os.environ.get("ACCESS_PASSWORD", "")            # empty = public, set = private
-MAX_MB = int(os.environ.get("MAX_MB", "300"))                # biggest single video
-MAX_MINUTES = int(os.environ.get("MAX_MINUTES", "60"))       # longest video
+MAX_MB = int(os.environ.get("MAX_MB", "2048"))                # biggest single video
+MAX_MINUTES = int(os.environ.get("MAX_MINUTES", "300"))       # longest video
 TTL = int(os.environ.get("KEEP_MINUTES", "20")) * 60         # how long files stay on the server
-MAX_CACHE_MB = int(os.environ.get("MAX_CACHE_MB", "1500"))   # total disk used by saved videos
+MAX_CACHE_MB = int(os.environ.get("MAX_CACHE_MB", "4500"))   # total disk used by saved videos
 MAX_JOBS = int(os.environ.get("MAX_JOBS", "2"))              # downloads running at the same time
 RATE_MAX = int(os.environ.get("RATE_MAX", "8"))              # requests per person...
 RATE_WINDOW = int(os.environ.get("RATE_WINDOW_MIN", "10")) * 60  # ...per this many minutes

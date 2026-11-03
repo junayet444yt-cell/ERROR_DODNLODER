@@ -6,9 +6,9 @@ services:
     healthCheckPath: /health
     envVars:
       - key: MAX_MB
-        value: "300"
+        value: "2048"
       - key: MAX_MINUTES
-        value: "60"
+        value: "300"
       - key: RATE_MAX
         value: "20"
       - key: BLOCKED_SITES
