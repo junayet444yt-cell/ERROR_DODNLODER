@@ -1,4 +1,4 @@
-VIDEO DOWNLOADER - public-ready version
+ERROR HUB DOWNLODER - public-ready version
 =======================================
 
 WHAT IT DOES

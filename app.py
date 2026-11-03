@@ -1,5 +1,5 @@
 """
-Video Downloader - public-ready version.
+ERROR HUB DOWNLODER - public-ready version.
 Paste a video link -> the server fetches it -> the video plays in the page and can be downloaded.
 """
 import os, re, glob, time, uuid, base64, socket, secrets, hmac, hashlib, ipaddress, mimetypes, threading
