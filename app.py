@@ -405,7 +405,7 @@ def grab_candidate(direct, ref, vid):
     return run_ydl(direct, vid, {"Referer": ref, "Origin": p.scheme + "://" + p.netloc})
 
 
-def run_ydl(url, vid, headers=None):
+def _ydl(url, vid, headers=None, yt_clients=None):
     opts = {
         "outtmpl": os.path.join(CACHE, vid + ".%(ext)s"),
         "format": "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080][ext=mp4]/bv*[height<=1080]+ba/bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b",
@@ -431,10 +431,32 @@ def run_ydl(url, vid, headers=None):
     if PROXY:
         opts["proxy"] = PROXY
     host = (urlparse(url).hostname or "").lower()
+    if yt_clients:  # YouTube: ask through a different "app" identity (some are not blocked on server IPs)
+        opts.setdefault("extractor_args", {})["youtube"] = {"player_client": yt_clients}
     if os.path.exists(COOKIES) and (USE_COOKIES or any(d in host for d in ("instagram.com", "twitter.com", "x.com", "youtube.com", "youtu.be", "facebook.com", "fb.watch"))):  # these sites often want a login on server IPs
         opts["cookiefile"] = COOKIES
     with yt_dlp.YoutubeDL(opts) as y:
         return y.extract_info(url, download=True)
+
+
+YT_BLOCKED = re.compile(r"429|too many requests|sign in|not a bot|confirm you|forbidden|403|unavailable|blocked|po.?token|format", re.I)
+
+
+def run_ydl(url, vid, headers=None):
+    host = (urlparse(url).hostname or "").lower()
+    if not any(d in host for d in ("youtube.com", "youtu.be", "youtube-nocookie.com")):
+        return _ydl(url, vid, headers)
+    url = re.sub(r"([?&])si=[^&#]*&?", r"\1", url).rstrip("?&")  # drop the share-tracking part
+    last = None
+    for clients in (None, ["tv", "web_safari"], ["android_vr"], ["web_embedded", "mweb"]):
+        try:
+            return _ydl(url, vid, headers, clients)
+        except Exception as e:
+            last = e
+            drop(vid)
+            if not YT_BLOCKED.search(str(e)):
+                break  # a different problem (deleted video, too long ...): other identities will not help
+    raise last
 
 
 @app.route("/")
@@ -574,7 +596,7 @@ def fetch():
                 info = x_download(url, vid)
             except Exception as e:
                 err = err or e
-        if info is None:  # fallback: dig the real video link out of the page
+        if info is None and not re.search(r"youtu(\.be|be\.com)", url.lower()):  # fallback: dig the real video link out of the page (not for YouTube pages)
             try:
                 ranked = rank_candidates(find_media(url, ref_in or None), with_dur=True)
                 alts = [(c[0], c[1], d) for c, d in ranked]
@@ -612,8 +634,8 @@ def fetch():
             msg = re.sub(r"\s+", " ", msg)[:200]
             if "does not pass filter" in msg or "duration" in msg:
                 msg = "This video is too long (limit %d minutes) or is a live stream." % MAX_MINUTES
-            elif re.search(r"youtu(\.be|be\.com)", url.lower()) and re.search(r"sign in|not a bot|confirm you|cookies|login|age|private|members", msg, re.I):
-                msg = "YouTube is asking this server to sign in (it often blocks data-centre servers like Render). Add your YouTube cookies (COOKIES_B64 setting) or use a proxy (PROXY_URL), then try again. Private, members-only or age-restricted videos need cookies."
+            elif re.search(r"youtu(\.be|be\.com)", url.lower()) and re.search(r"429|too many|sign in|not a bot|confirm you|cookies|login|age|private|members|blocked|forbidden|403", msg, re.I):
+                msg = "YouTube blocked this server (Render's IP address is on its block list: HTTP 429 / sign-in). The app already tried several YouTube client identities. To fix it for good: (1) set PROXY_URL to a residential or mobile proxy, or (2) add your YouTube cookies in COOKIES_B64, or (3) run the app on your own PC / home internet. Private, members-only and age-restricted videos always need cookies."
             elif re.search(r"facebook\.com|fb\.watch", url.lower()) and re.search(r"login|cookie|private|not available|permission|log in", msg, re.I):
                 msg = "Facebook says this video is not public (or wants a login). Public videos work. For friends-only or restricted ones add your cookies (COOKIES_B64 setting)."
             elif re.search(r"(twitter|x)\.com", url.lower()) and re.search(r"login|cookie|guest|sensitive|nsfw|age|protected|not authorized|no video|authentication", msg, re.I):
@@ -621,7 +643,7 @@ def fetch():
             elif "instagram" in url.lower() and re.search(r"login|cookie|rate-limit|not available|empty media|private", msg, re.I):
                 msg = "Instagram wants a login. Add your cookies (COOKIES_B64 setting or cookies.txt) and try again. Private accounts need the cookies of an account that follows them."
             elif "403" in msg or "blocked" in msg:
-                msg += " | Tip: fill the 'Embedded on' box with the page where this video is shown."
+                msg += " | Try again in a few minutes, or paste the link of the page that shows the video."
             return jsonify(error="Could not get the video: " + msg), 400
         if BLOCKED and str(info.get("extractor_key", "")).lower().startswith(BLOCKED_EXTRACTORS):
             drop(vid)
