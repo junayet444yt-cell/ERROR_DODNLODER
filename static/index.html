@@ -176,10 +176,21 @@ input[type=url],input[type=password]{background:rgba(0,0,0,calc(.06 + .28 * var(
 input[type=url]::placeholder{color:rgba(255,255,255,.72)}
 p.sub,.hint,.hint2,.note,details summary,#msg,.alts,.size{text-shadow:0 1px 4px rgba(0,0,0,.95),0 0 10px rgba(0,0,0,.6)}
 .pst,.x{background:rgba(0,0,0,.28)}
+
+/* ===== v18: soft colour clouds that drift behind everything (follow the colour change) ===== */
+#bg{animation:none;filter:var(--bf,none)}  /* no hue-rotate on the background: your video keeps its real colours */
+.aur{position:absolute;display:block;width:62vmax;height:62vmax;border-radius:50%;pointer-events:none;mix-blend-mode:screen;opacity:.55;will-change:transform}
+.a1{left:-18vmax;top:-24vmax;background:radial-gradient(circle,color-mix(in srgb,var(--a) 36%,transparent),transparent 66%);animation:fl1 26s ease-in-out infinite alternate}
+.a2{right:-24vmax;top:6vh;background:radial-gradient(circle,color-mix(in srgb,var(--b) 32%,transparent),transparent 66%);animation:fl2 31s ease-in-out infinite alternate}
+.a3{left:16vw;bottom:-36vmax;background:radial-gradient(circle,color-mix(in srgb,var(--c) 26%,transparent),transparent 66%);animation:fl3 37s ease-in-out infinite alternate}
+@keyframes fl1{to{transform:translate(20vmax,16vmax) scale(1.18)}}
+@keyframes fl2{to{transform:translate(-22vmax,18vmax) scale(.9)}}
+@keyframes fl3{to{transform:translate(18vmax,-14vmax) scale(1.2)}}
+@media (prefers-reduced-motion:reduce){.aur{animation:none}}
 </style>
 </head>
 <body>
-<div id="bg"><video id="bgv" muted loop playsinline autoplay></video><div id="shade"></div><canvas id="fx"></canvas></div>
+<div id="bg"><video id="bgv" muted loop playsinline autoplay></video><div id="shade"></div><i class="aur a1"></i><i class="aur a2"></i><i class="aur a3"></i><canvas id="fx"></canvas></div>
 <main>
   <header class="top rv" style="--i:0">
     <h1 class="brand" aria-label="ERROR HUB DOWNLODER"><span class="dev">ERROR HUB</span><span class="ang">DOWNLODER</span></h1>
@@ -430,20 +441,46 @@ addEventListener('appinstalled',()=>{$('install').style.display='none'});
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 
 let W=0,H=0,D=1,P=[],raf=0;
+const MAXP=420;
 function size(){D=Math.min(devicePixelRatio||1,2);W=fx.width=innerWidth*D;H=fx.height=innerHeight*D}
-function mk(init){return{x:Math.random()*W,y:init?Math.random()*H:H+20*D,r:(Math.random()*2.2+.7)*D,v:(Math.random()*.7+.3)*D,s:Math.random()*Math.PI*2,a:Math.random()*.4+.12,h:Math.random()*45+5}}
+/* floating sparkles rise from the bottom; every particle keeps its own colour offset, so the whole sky follows the colour drift */
+function mk(init){return{x:Math.random()*W,y:init?Math.random()*H:H+10*D,vx:0,vy:-(Math.random()*1.1+.45)*D,r:(Math.random()*2.4+.8)*D,s:Math.random()*6.283,w:Math.random()*.04+.01,a:Math.random()*.45+.2,o:Math.random()*110-35,tw:Math.random()*6.283,life:-1,star:Math.random()>.9}}
+function glow(x,y,r,h,a,star){
+  cx.fillStyle='hsla('+h+',80%,58%,'+(a*.2)+')';cx.beginPath();cx.arc(x,y,r*3.2,0,6.283);cx.fill();
+  cx.fillStyle='hsla('+h+',85%,68%,'+a+')';cx.beginPath();cx.arc(x,y,r,0,6.283);cx.fill();
+  if(star){cx.strokeStyle='hsla('+h+',90%,78%,'+(a*.8)+')';cx.lineWidth=D;cx.beginPath();cx.moveTo(x-r*3.5,y);cx.lineTo(x+r*3.5,y);cx.moveTo(x,y-r*3.5);cx.lineTo(x,y+r*3.5);cx.stroke()}
+}
 function frame(){
   cx.clearRect(0,0,W,H);cx.globalCompositeOperation='lighter';
-  for(const p of P){
-    p.y-=p.v;p.s+=.02;p.x+=Math.sin(p.s)*.5*D;
-    if(p.y<-20){Object.assign(p,mk(false))}
-    const fade=Math.min(1,p.y/(H*.25));
-    cx.fillStyle='hsla('+((p.h+hue)%360)+',85%,52%,'+(p.a*Math.max(fade,0))+')';
-    cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.283);cx.fill();
+  for(let i=P.length-1;i>=0;i--){
+    const p=P[i];let fade;
+    if(p.life>=0){ /* spark from a touch: flies out, slows down, fades */
+      p.life-=.018;if(p.life<=0){P.splice(i,1);continue}
+      p.vx*=.955;p.vy=p.vy*.955-.012*D;p.x+=p.vx;p.y+=p.vy;fade=Math.min(1,p.life*1.6);
+    }else{
+      p.s+=p.w;p.x+=Math.sin(p.s)*.6*D;p.y+=p.vy;
+      if(p.y<-20*D)Object.assign(p,mk(false));
+      fade=Math.max(0,Math.min(1,p.y/(H*.3)));
+    }
+    p.tw+=.07;
+    glow(p.x,p.y,p.r,(((hue+p.o)%360)+360)%360,p.a*fade*(.75+.25*Math.sin(p.tw)),p.star);
   }
   raf=requestAnimationFrame(frame);
 }
-function startFx(){stopFx();size();const n=Math.round(Math.min(70,Math.max(28,innerWidth/20)));P=Array.from({length:n},()=>mk(true));frame()}
+function burst(x,y,n){
+  if(!raf)return;
+  for(let i=0;i<n&&P.length<MAXP;i++){
+    const ang=Math.random()*6.283,sp=(Math.random()*5+1.5)*D;
+    P.push({x:x*D,y:y*D,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp-1.5*D,r:(Math.random()*2.4+1)*D,s:0,w:0,a:Math.random()*.4+.45,o:Math.random()*140-50,tw:Math.random()*6.283,life:Math.random()*.5+.7,star:Math.random()>.8});
+  }
+}
+let lastB=0;
+addEventListener('pointerdown',e=>burst(e.clientX,e.clientY,28),{passive:true});
+addEventListener('pointermove',e=>{
+  const t=performance.now();if(t-lastB<30)return;lastB=t;
+  burst(e.clientX,e.clientY,e.pointerType==='mouse'&&!e.buttons?2:6); /* finger/mouse drag leaves a bright trail */
+},{passive:true});
+function startFx(){stopFx();size();const n=Math.round(Math.min(170,Math.max(70,innerWidth/8)));P=Array.from({length:n},()=>mk(true));frame()}
 function stopFx(){cancelAnimationFrame(raf);raf=0;cx.clearRect(0,0,W,H)}
 addEventListener('resize',()=>{if(raf)startFx()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0}else if($('emb').checked&&!raf)startFx()});
