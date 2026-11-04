@@ -199,6 +199,9 @@ img,a,svg{-webkit-user-drag:none;user-drag:none}
 #bg,#bg.blur{filter:none;transform:none;animation:none}
 #bgv{filter:var(--bf,none);transition:filter .25s}
 #bg.blur #bgv{transform:scale(1.08)} /* hides the soft edges the blur creates */
+
+/* v21: cheaper colour clouds (no blend mode) so low-end phones stay smooth */
+.aur{mix-blend-mode:normal;opacity:.5}
 </style>
 </head>
 <body>
@@ -460,26 +463,68 @@ let W=0,H=0,D=1,P=[],raf=0;
 const MAXP=420;
 function size(){D=Math.min(devicePixelRatio||1,2);W=fx.width=innerWidth*D;H=fx.height=innerHeight*D}
 /* floating sparkles rise from the bottom; every particle keeps its own colour offset, so the whole sky follows the colour drift */
-function mk(init){return{x:Math.random()*W,y:init?Math.random()*H:H+10*D,vx:0,vy:-(Math.random()*1.1+.45)*D,r:(Math.random()*2.4+.8)*D,s:Math.random()*6.283,w:Math.random()*.04+.01,a:Math.random()*.45+.2,o:Math.random()*110-35,tw:Math.random()*6.283,life:-1,star:Math.random()>.9}}
+function mk0(init){return{x:Math.random()*W,y:init?Math.random()*H:H+10*D,vx:0,vy:-(Math.random()*1.1+.45)*D,r:(Math.random()*2.4+.8)*D,s:Math.random()*6.283,w:Math.random()*.04+.01,a:Math.random()*.45+.2,o:Math.random()*110-35,tw:Math.random()*6.283,life:-1,star:Math.random()>.9}}
+function mk(init){const o=mk0(init);o.bv=o.vy;return o}
+/* tentacle web: neighbours pull each other, joined by glowing, wavy, colourful lines; every spark leaves a comet tail */
+let T=0;
+const LINK=150,MAXLINK=3;
 function glow(x,y,r,h,a,star){
   cx.fillStyle='hsla('+h+',80%,58%,'+(a*.2)+')';cx.beginPath();cx.arc(x,y,r*3.2,0,6.283);cx.fill();
-  cx.fillStyle='hsla('+h+',85%,68%,'+a+')';cx.beginPath();cx.arc(x,y,r,0,6.283);cx.fill();
+  cx.fillStyle='hsla('+h+',85%,70%,'+a+')';cx.beginPath();cx.arc(x,y,r,0,6.283);cx.fill();
   if(star){cx.strokeStyle='hsla('+h+',90%,78%,'+(a*.8)+')';cx.lineWidth=D;cx.beginPath();cx.moveTo(x-r*3.5,y);cx.lineTo(x+r*3.5,y);cx.moveTo(x,y-r*3.5);cx.lineTo(x,y+r*3.5);cx.stroke()}
 }
+function tail(p,h,a){
+  const sp=Math.hypot(p.vx,p.vy);if(sp<.2)return;
+  const L=Math.min(46*D,sp*14),ux=-p.vx/sp,uy=-p.vy/sp;
+  for(let i=0;i<3;i++){
+    cx.strokeStyle='hsla('+h+',90%,66%,'+(a*.55*(1-i/3))+')';cx.lineWidth=Math.max(.6,p.r*(1.1-i*.3));
+    cx.beginPath();cx.moveTo(p.x+ux*L*i/3,p.y+uy*L*i/3);cx.lineTo(p.x+ux*L*(i+1)/3,p.y+uy*L*(i+1)/3);cx.stroke();
+  }
+}
 function frame(){
-  cx.clearRect(0,0,W,H);cx.globalCompositeOperation='lighter';
+  cx.clearRect(0,0,W,H);cx.globalCompositeOperation='lighter';T++;
+  const R=LINK*D,R2=R*R;
+  /* 1) move */
   for(let i=P.length-1;i>=0;i--){
-    const p=P[i];let fade;
-    if(p.life>=0){ /* spark from a touch: flies out, slows down, fades */
+    const p=P[i];
+    if(p.life>=0){ /* spark from a touch */
       p.life-=.018;if(p.life<=0){P.splice(i,1);continue}
-      p.vx*=.955;p.vy=p.vy*.955-.012*D;p.x+=p.vx;p.y+=p.vy;fade=Math.min(1,p.life*1.6);
+      p.vx*=.955;p.vy=p.vy*.955-.012*D;p.x+=p.vx;p.y+=p.vy;p.f=Math.min(1,p.life*1.6);
     }else{
-      p.s+=p.w;p.x+=Math.sin(p.s)*.6*D;p.y+=p.vy;
+      p.s+=p.w;p.vx*=.96;p.vy+=(p.bv-p.vy)*.03;p.x+=p.vx+Math.sin(p.s)*.5*D;p.y+=p.vy;
       if(p.y<-20*D)Object.assign(p,mk(false));
-      fade=Math.max(0,Math.min(1,p.y/(H*.3)));
+      p.f=Math.max(0,Math.min(1,p.y/(H*.3)));
     }
-    p.tw+=.07;
-    glow(p.x,p.y,p.r,(((hue+p.o)%360)+360)%360,p.a*fade*(.75+.25*Math.sin(p.tw)),p.star);
+    p.l=0;p.tw+=.07;
+  }
+  /* 2) find neighbours with a grid, pull them together, draw the tentacle between them */
+  const grid=new Map();
+  for(let i=0;i<P.length;i++){P[i].i=i;const k=((P[i].x/R)|0)+','+((P[i].y/R)|0);const c=grid.get(k);c?c.push(P[i]):grid.set(k,[P[i]])}
+  let drawn=0;
+  for(const p of P){
+    if(p.l>=MAXLINK||p.f<.05)continue;
+    const gx=(p.x/R)|0,gy=(p.y/R)|0;
+    for(let ox=-1;ox<=1&&p.l<MAXLINK;ox++)for(let oy=-1;oy<=1&&p.l<MAXLINK;oy++){
+      const c=grid.get((gx+ox)+','+(gy+oy));if(!c)continue;
+      for(const q of c){
+        if(q.i<=p.i||q.l>=MAXLINK||q.f<.05)continue;
+        const dx=q.x-p.x,dy=q.y-p.y,d2=dx*dx+dy*dy;if(d2>R2||d2<4)continue;
+        const d=Math.sqrt(d2),k=1-d/R,pull=k*.035*D;
+        p.vx+=dx/d*pull;q.vx-=dx/d*pull;p.vy+=dy/d*pull*.4;q.vy-=dy/d*pull*.4;  /* they tug at each other */
+        p.l++;q.l++;
+        if(drawn>240)continue;drawn++;
+        const amp=Math.sin(T*.035+p.s+q.s)*d*.2,mx=(p.x+q.x)/2-dy/d*amp,my=(p.y+q.y)/2+dx/d*amp;
+        const h=((hue+(p.o+q.o)/2)%360+360)%360,a=k*Math.min(p.f,q.f)*.6;
+        cx.beginPath();cx.moveTo(p.x,p.y);cx.quadraticCurveTo(mx,my,q.x,q.y);
+        cx.strokeStyle='hsla('+h+',85%,60%,'+(a*.25)+')';cx.lineWidth=3.4*D;cx.stroke();   /* soft glow */
+        cx.strokeStyle='hsla('+h+',90%,72%,'+a+')';cx.lineWidth=1.1*D;cx.stroke();          /* bright core */
+      }
+    }
+  }
+  /* 3) draw the sparks with their tails */
+  for(const p of P){
+    const h=(((hue+p.o)%360)+360)%360,al=p.a*p.f*(.75+.25*Math.sin(p.tw));
+    tail(p,h,al);glow(p.x,p.y,p.r,h,al,p.star);
   }
   raf=requestAnimationFrame(frame);
 }
@@ -496,7 +541,7 @@ addEventListener('pointermove',e=>{
   const t=performance.now();if(t-lastB<30)return;lastB=t;
   burst(e.clientX,e.clientY,e.pointerType==='mouse'&&!e.buttons?2:6); /* finger/mouse drag leaves a bright trail */
 },{passive:true});
-function startFx(){stopFx();size();const n=Math.round(Math.min(170,Math.max(70,innerWidth/8)));P=Array.from({length:n},()=>mk(true));frame()}
+function startFx(){stopFx();size();const n=Math.round(Math.min(120,Math.max(55,innerWidth/11)));P=Array.from({length:n},()=>mk(true));frame()}
 function stopFx(){cancelAnimationFrame(raf);raf=0;cx.clearRect(0,0,W,H)}
 addEventListener('resize',()=>{if(raf)startFx()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0}else if($('emb').checked&&!raf)startFx()});
