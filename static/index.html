@@ -25,7 +25,7 @@ background:radial-gradient(900px 500px at 10% -10%,var(--d1) 0,transparent 60%),
 filter:var(--bf,none)}
 #bg.blur{transform:scale(1.08)}
 #fx{position:absolute;inset:0;width:100%;height:100%}
-#bgv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+#bgv{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;object-fit:cover;background:transparent;display:none}
 #shade{position:absolute;inset:0;background:#000;opacity:0}
 p.sub,.note,#msg{text-shadow:0 1px 8px #000c}
 main{position:relative;max-width:780px;margin:0 auto;padding:30px 16px 80px}
@@ -113,6 +113,7 @@ html,body{overscroll-behavior-y:contain}
 .brand .ang::after{background:linear-gradient(90deg,var(--a),#e8dcc0 45%,transparent)}
 p.sub{color:var(--mut)}
 .hint{color:var(--c);text-shadow:none;opacity:.9}
+.hint2{margin-top:4px;font-size:13px;color:var(--mut);opacity:.85}
 /* glass card */
 .glass{position:relative;border-radius:22px;padding:18px;border:1px solid rgba(255,255,255,.07);
 background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012)),color-mix(in srgb,var(--card) 66%,transparent);
@@ -146,7 +147,10 @@ button.pbtn.main{background:linear-gradient(135deg,var(--c),var(--b))}
 .discord.facebook:hover{box-shadow:0 6px 18px #1877f288,inset 0 1px 0 #ffffff40}
 .rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.32);transform:scale(0);animation:rip .6s ease-out forwards;pointer-events:none}
 @keyframes rip{to{transform:scale(1);opacity:0}}
-button:active:not(:disabled),.dl:active{transform:scale(.97)}
+button:active:not(:disabled):not(.pst):not(.x),.dl:active{transform:scale(.97)}
+.pst:active{transform:translateY(-50%) scale(.95)}
+.x:active{transform:translateY(-50%) scale(.9)}
+.pst,.x{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .alts{flex:1 1 100%;display:none;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
 .alts button{padding:5px 12px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.06);color:var(--c);font:600 13px "Chakra Petch",system-ui,sans-serif;cursor:pointer;transition:background .2s}
 .alts button:hover{background:rgba(255,255,255,.13)}
@@ -161,6 +165,17 @@ button:active:not(:disabled),.dl:active{transform:scale(.97)}
 .rv{opacity:0;transform:translateY(12px);animation:rv .65s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--i,0) * 90ms)}
 @keyframes rv{to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;animation:none}.glass::before,.bar i,.brand .dev{animation:none}}
+
+/* ===== v17: clear panel + link bar so the background video shows through (slider = how frosted) ===== */
+:root{--gl:0}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,calc(.02 + .03 * var(--gl))),rgba(255,255,255,0)),rgba(0,0,0,calc(.04 + .42 * var(--gl)));
+-webkit-backdrop-filter:blur(calc(16px * var(--gl))) saturate(1.1);backdrop-filter:blur(calc(16px * var(--gl))) saturate(1.1);
+border-color:rgba(255,255,255,.12);box-shadow:0 10px 30px rgba(0,0,0,calc(.12 + .3 * var(--gl))),inset 0 1px 0 rgba(255,255,255,.08)}
+.glassoff .glass{-webkit-backdrop-filter:none;backdrop-filter:none}
+input[type=url],input[type=password]{background:rgba(0,0,0,calc(.06 + .28 * var(--gl)));border:1px solid rgba(255,255,255,.22);color:#fff}
+input[type=url]::placeholder{color:rgba(255,255,255,.72)}
+p.sub,.hint,.hint2,.note,details summary,#msg,.alts,.size{text-shadow:0 1px 4px rgba(0,0,0,.95),0 0 10px rgba(0,0,0,.6)}
+.pst,.x{background:rgba(0,0,0,.28)}
 </style>
 </head>
 <body>
@@ -190,6 +205,7 @@ button:active:not(:disabled),.dl:active{transform:scale(.97)}
     <button class="go" id="go">Get Video</button>
   </div>
   <p class="hint">Instagram, TikTok, Twitter and 18+ content download</p>
+  <p class="hint hint2">18+ content · limited website video download</p>
   <button class="pbtn main" id="install" type="button" style="display:none;flex:none;margin-top:12px;padding:11px 18px;font-size:18px">📲 Install as App</button>
   <input id="file" type="file" accept="video/*,.mkv,.mov,.m4v,.3gp" hidden>
   <details>
@@ -220,6 +236,8 @@ button:active:not(:disabled),.dl:active{transform:scale(.97)}
   <input id="vop" type="range" min="10" max="100" step="5" value="100">
   <label for="blur"><span>Blur</span><span id="blv">0</span></label>
   <input id="blur" type="range" min="0" max="24" step="1" value="0">
+  <label for="gl"><span>Panel frost (0 = clear)</span><span id="glv">0</span></label>
+  <input id="gl" type="range" min="0" max="100" step="5" value="0">
   <label for="dim"><span>Darkness</span><span id="dmv">0</span></label>
   <input id="dim" type="range" min="0" max="80" step="5" value="0">
   <div class="row"><span>Video sound</span><input id="snd" type="checkbox" style="accent-color:var(--b);width:20px;height:20px"></div>
@@ -244,8 +262,23 @@ function say(t,err,spin){msg.className=err?'err':'';msg.textContent='';if(spin){
 const pst=$('pst');
 function sync(){const has=!!url.value;clr.style.display=has?'block':'none';pst.style.display=has?'none':'block'}
 url.addEventListener('input',()=>{sync();store.set('evdUrl',url.value)});sync();
-clr.onclick=()=>{url.value='';store.set('evdUrl','');sync();url.focus()};
-pst.onclick=async()=>{try{const t=(await navigator.clipboard.readText()||'').trim();if(t){url.value=t;store.set('evdUrl',t);sync();url.focus()}else{say('Clipboard is empty.',true)}}catch(e){url.focus();say('Long-press the box and choose Paste.',true)}};
+clr.onclick=()=>{setUrl('');say('');url.focus()};
+function cleanUrl(t){
+  t=(t||'').trim();const m=t.match(/https?:\/\/[^\s<>"']+/i);
+  if(m)return m[0].replace(/[)\].,;!?]+$/,'');
+  return /^(www\.)?[\w-]+(\.[\w-]+)+\/\S*/.test(t)?'https://'+t:t;
+}
+function setUrl(t){url.value=t;store.set('evdUrl',t);sync()}
+pst.onclick=async()=>{
+  try{
+    const t=cleanUrl(await navigator.clipboard.readText());
+    if(t){setUrl(t);say('');url.focus()}else{say('Clipboard is empty. Copy a video link first.',true)}
+  }catch(e){
+    url.focus();
+    say('Chrome blocked clipboard access. Tap the box, press and hold, then choose Paste. (Or allow Clipboard in the site settings.)',true);
+  }
+};
+url.addEventListener('paste',()=>setTimeout(()=>{const t=cleanUrl(url.value);if(t!==url.value)setUrl(t);else sync()},0));
 
 function closeVideo(){
   vid.pause();vid.removeAttribute('src');vid.removeAttribute('poster');vid.load();
@@ -297,7 +330,8 @@ async function pickAlt(id,n){
   finally{go.disabled=false;$('bar').classList.remove('on')}
 }
 async function run(){
-  const u=url.value.trim(); if(!u){say('Paste a link first',true);return}
+  const u=cleanUrl(url.value); if(!u){say('Paste a link first',true);return}
+  if(u!==url.value)setUrl(u);
   closeVideo(); go.disabled=true; $('bar').classList.add('on');
   let sec=0; const tick=()=>say('Getting the video… '+sec+'s (big videos can take a while)',false,true);
   tick(); timer=setInterval(()=>{sec++;tick()},1000);
@@ -329,17 +363,18 @@ const bg=$('bg'),fx=$('fx'),cx=fx.getContext('2d');
 const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const bgv=$('bgv');
 function applyBg(){
-  const b=+$('blur').value,d=+$('dim').value,o=+$('vop').value;
+  const b=+$('blur').value,d=+$('dim').value,o=+$('vop').value,g=+$('gl').value;
+  $('glv').textContent=g+'%';document.documentElement.style.setProperty('--gl',g/100);document.documentElement.classList.toggle('glassoff',g<5);store.set('bgGl',g);
   $('blv').textContent=b+'px';$('dmv').textContent=d+'%';$('vov').textContent=o+'%';
   bgv.style.opacity=o/100;$('shade').style.opacity=d/100;
   bg.style.setProperty('--bf',b?'blur('+b+'px)':'none');
   bg.classList.toggle('blur',b>0);
   store.set('bgBlur',b);store.set('bgDim2',d);store.set('bgOp',o);
 }
-$('blur').value=store.get('bgBlur',0);$('dim').value=store.get('bgDim2',20);$('vop').value=store.get('bgOp',100);
+$('blur').value=store.get('bgBlur',0);$('dim').value=store.get('bgDim2',20);$('vop').value=store.get('bgOp',100);$('gl').value=store.get('bgGl',0);
 $('emb').checked=store.get('bgEmb',reduce?'0':'1')==='1';
-$('blur').oninput=$('dim').oninput=$('vop').oninput=applyBg;
-$('norm').onclick=()=>{$('blur').value=0;$('dim').value=20;$('vop').value=100;applyBg()};
+$('blur').oninput=$('dim').oninput=$('vop').oninput=$('gl').oninput=applyBg;
+$('norm').onclick=()=>{$('blur').value=0;$('dim').value=20;$('vop').value=100;$('gl').value=0;applyBg()};
 
 /* background video: picked from your device, kept in the browser (IndexedDB) so it stays after reload. Nothing is uploaded. */
 const idb={db:null,
@@ -366,7 +401,10 @@ $('snd').onchange=()=>{bgv.muted=!$('snd').checked;if(!bgv.muted)bgv.play().catc
 bgv.addEventListener('error',()=>{if(bgv.getAttribute('src')){clearBgVideo();say("This video format can't be used as background. Try an MP4.",true)}});
 idb.open().then(async ok=>{if(ok){const f=await idb.get();if(f)setBgVideo(f)}});
 $('emb').onchange=()=>{store.set('bgEmb',$('emb').checked?'1':'0');$('emb').checked?startFx():stopFx()};
-$('gear').onclick=()=>{const p=$('panel'),o=p.style.display==='block';p.style.display=o?'none':'block';$('gear').setAttribute('aria-expanded',!o)};
+function panelShow(on){$('panel').style.display=on?'block':'none';$('gear').setAttribute('aria-expanded',on)}
+$('gear').onclick=()=>panelShow($('panel').style.display!=='block');
+document.addEventListener('pointerdown',e=>{if($('panel').style.display==='block'&&!e.target.closest('#panel,#gear'))panelShow(false)});
+addEventListener('keydown',e=>{if(e.key==='Escape')panelShow(false)});
 applyBg();
 
 /* ---- slow automatic colour change (all colours drift around the colour wheel) ---- */
