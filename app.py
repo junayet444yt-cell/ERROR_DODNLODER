@@ -32,9 +32,9 @@ COOKIES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt"
 CACHE = "/tmp/vcache"
 os.makedirs(CACHE, exist_ok=True)
 
-# Sites that are not allowed. Change with the BLOCKED_SITES setting (comma separated, "none" = block nothing).
-# Instagram is allowed by default now. To block it again add instagram.com to BLOCKED_SITES.
-_default_block = "youtube.com,youtu.be,youtube-nocookie.com,facebook.com,fb.watch,fb.com"
+# Sites that are not allowed. Nothing is blocked by default now (YouTube, Facebook, Instagram, TikTok, X all work).
+# To block some, use the BLOCKED_SITES setting, e.g. youtube.com,youtu.be  (comma separated).
+_default_block = "none"
 _raw_block = os.environ.get("BLOCKED_SITES", _default_block).strip().lower()
 BLOCKED = tuple(d.strip() for d in _raw_block.split(",") if d.strip() and d.strip() != "none")
 BLOCKED_EXTRACTORS = tuple(sorted({d.split(".")[0] for d in BLOCKED})) or ("\0",)
@@ -408,7 +408,7 @@ def grab_candidate(direct, ref, vid):
 def run_ydl(url, vid, headers=None):
     opts = {
         "outtmpl": os.path.join(CACHE, vid + ".%(ext)s"),
-        "format": "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b",
+        "format": "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080][ext=mp4]/bv*[height<=1080]+ba/bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b",
         "merge_output_format": "mp4",
         "noplaylist": True,
         "playlistend": 1,  # a page with several videos: never download them all
@@ -431,7 +431,7 @@ def run_ydl(url, vid, headers=None):
     if PROXY:
         opts["proxy"] = PROXY
     host = (urlparse(url).hostname or "").lower()
-    if os.path.exists(COOKIES) and (USE_COOKIES or any(d in host for d in ("instagram.com", "twitter.com", "x.com"))):  # Instagram and Twitter/X often need login cookies
+    if os.path.exists(COOKIES) and (USE_COOKIES or any(d in host for d in ("instagram.com", "twitter.com", "x.com", "youtube.com", "youtu.be", "facebook.com", "fb.watch"))):  # these sites often want a login on server IPs
         opts["cookiefile"] = COOKIES
     with yt_dlp.YoutubeDL(opts) as y:
         return y.extract_info(url, download=True)
@@ -612,6 +612,10 @@ def fetch():
             msg = re.sub(r"\s+", " ", msg)[:200]
             if "does not pass filter" in msg or "duration" in msg:
                 msg = "This video is too long (limit %d minutes) or is a live stream." % MAX_MINUTES
+            elif re.search(r"youtu(\.be|be\.com)", url.lower()) and re.search(r"sign in|not a bot|confirm you|cookies|login|age|private|members", msg, re.I):
+                msg = "YouTube is asking this server to sign in (it often blocks data-centre servers like Render). Add your YouTube cookies (COOKIES_B64 setting) or use a proxy (PROXY_URL), then try again. Private, members-only or age-restricted videos need cookies."
+            elif re.search(r"facebook\.com|fb\.watch", url.lower()) and re.search(r"login|cookie|private|not available|permission|log in", msg, re.I):
+                msg = "Facebook says this video is not public (or wants a login). Public videos work. For friends-only or restricted ones add your cookies (COOKIES_B64 setting)."
             elif re.search(r"(twitter|x)\.com", url.lower()) and re.search(r"login|cookie|guest|sensitive|nsfw|age|protected|not authorized|no video|authentication", msg, re.I):
                 msg = "Twitter/X wants a login for this post (sensitive or age-restricted content, or the guest limit). Add your cookies (COOKIES_B64 setting or cookies.txt) and try again. Posts without a video cannot be downloaded."
             elif "instagram" in url.lower() and re.search(r"login|cookie|rate-limit|not available|empty media|private", msg, re.I):

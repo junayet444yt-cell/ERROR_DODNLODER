@@ -194,6 +194,11 @@ input,textarea{-webkit-user-select:text;user-select:text}
 ::selection{background:transparent}
 input::selection{background:color-mix(in srgb,var(--b) 45%,transparent)}
 img,a,svg{-webkit-user-drag:none;user-drag:none}
+
+/* ===== v20: the Blur slider blurs ONLY the background video; sparkles, colour clouds and touch effects stay sharp ===== */
+#bg,#bg.blur{filter:none;transform:none;animation:none}
+#bgv{filter:var(--bf,none);transition:filter .25s}
+#bg.blur #bgv{transform:scale(1.08)} /* hides the soft edges the blur creates */
 </style>
 </head>
 <body>
@@ -222,7 +227,7 @@ img,a,svg{-webkit-user-drag:none;user-drag:none}
     </div>
     <button class="go" id="go">Get Video</button>
   </div>
-  <p class="hint">Instagram, TikTok, Twitter and 18+ content download</p>
+  <p class="hint">YouTube, Facebook, Instagram, TikTok, Twitter and 18+ content download</p>
   <p class="hint hint2">18+ content · limited website video download</p>
   <button class="pbtn main" id="install" type="button" style="display:none;flex:none;margin-top:12px;padding:11px 18px;font-size:18px">📲 Install as App</button>
   <input id="file" type="file" accept="video/*,.mkv,.mov,.m4v,.3gp" hidden>
