@@ -187,6 +187,13 @@ p.sub,.hint,.hint2,.note,details summary,#msg,.alts,.size{text-shadow:0 1px 4px 
 @keyframes fl2{to{transform:translate(-22vmax,18vmax) scale(.9)}}
 @keyframes fl3{to{transform:translate(18vmax,-14vmax) scale(1.2)}}
 @media (prefers-reduced-motion:reduce){.aur{animation:none}}
+
+/* ===== v19: page text cannot be selected or copied (the link box stays editable) ===== */
+html,body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+::selection{background:transparent}
+input::selection{background:color-mix(in srgb,var(--b) 45%,transparent)}
+img,a,svg{-webkit-user-drag:none;user-drag:none}
 </style>
 </head>
 <body>
@@ -219,10 +226,6 @@ p.sub,.hint,.hint2,.note,details summary,#msg,.alts,.size{text-shadow:0 1px 4px 
   <p class="hint hint2">18+ content · limited website video download</p>
   <button class="pbtn main" id="install" type="button" style="display:none;flex:none;margin-top:12px;padding:11px 18px;font-size:18px">📲 Install as App</button>
   <input id="file" type="file" accept="video/*,.mkv,.mov,.m4v,.3gp" hidden>
-  <details>
-    <summary>Video not loading (403 / blocked)?</summary>
-    <input id="ref" type="url" placeholder="Embedded on: page link where this video is shown" autocomplete="off" aria-label="Embedded on page link">
-  </details>
   <div class="bar" id="bar" aria-hidden="true"><i></i></div>
   </section>
   <div id="msg" role="status"></div>
@@ -311,6 +314,14 @@ document.addEventListener('pointerdown',e=>{
   b.appendChild(i);setTimeout(()=>i.remove(),650);
 });
 
+/* ---- block selecting / copying page text (input boxes and the video player still work normally) ---- */
+(function(){
+  const ok=t=>t&&t.closest&&t.closest('input,textarea,video');
+  ['copy','cut','selectstart','dragstart'].forEach(ev=>document.addEventListener(ev,e=>{if(!ok(e.target))e.preventDefault()}));
+  document.addEventListener('contextmenu',e=>{if(!ok(e.target))e.preventDefault()});
+  document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&['c','x','a','u','s'].includes(e.key.toLowerCase())&&!ok(document.activeElement)){e.preventDefault()}});
+})();
+
 /* ---- link downloader ---- */
 function showRes(d){
   vid.src='/media/'+d.id; if(d.thumbnail) vid.poster=d.thumbnail;
@@ -347,7 +358,7 @@ async function run(){
   let sec=0; const tick=()=>say('Getting the video… '+sec+'s (big videos can take a while)',false,true);
   tick(); timer=setInterval(()=>{sec++;tick()},1000);
   try{
-    const r=await fetch('/api/fetch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u,referer:$('ref').value.trim()})});
+    const r=await fetch('/api/fetch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})});
     if(r.status===401){$('lock').style.display='grid';say('');return}
     let d={}; try{d=await r.json()}catch(e){throw new Error(r.status===502||r.status===504?'The server is waking up or busy. Wait 30 seconds and try again.':'Something went wrong')}
     if(!r.ok) throw new Error(d.error||'Something went wrong');
