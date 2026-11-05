@@ -202,13 +202,22 @@ img,a,svg{-webkit-user-drag:none;user-drag:none}
 
 /* v21: cheaper colour clouds (no blend mode) so low-end phones stay smooth */
 .aur{mix-blend-mode:normal;opacity:.5}
+
+/* ===== v25: occasional glitch flicker on the title ===== */
+.brand .dev{position:relative}
+.brand .dev::before,.brand .dev::after{content:attr(data-t);position:absolute;left:0;top:0;opacity:0;pointer-events:none;-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand .dev::before{background:linear-gradient(90deg,#ff4ad8,#ff4ad8);-webkit-background-clip:text;background-clip:text;animation:gl1 7s steps(1) infinite}
+.brand .dev::after{background:linear-gradient(90deg,#46c8ff,#46c8ff);-webkit-background-clip:text;background-clip:text;animation:gl2 7s steps(1) infinite}
+@keyframes gl1{0%,93%,100%{opacity:0;transform:none}94%{opacity:.55;transform:translate(-3px,0)}96%{opacity:.4;transform:translate(2px,1px)}98%{opacity:0}}
+@keyframes gl2{0%,93%,100%{opacity:0;transform:none}95%{opacity:.5;transform:translate(3px,0)}97%{opacity:.35;transform:translate(-2px,-1px)}99%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.brand .dev::before,.brand .dev::after{animation:none}}
 </style>
 </head>
 <body>
 <div id="bg"><video id="bgv" muted loop playsinline autoplay></video><div id="shade"></div><i class="aur a1"></i><i class="aur a2"></i><i class="aur a3"></i><canvas id="fx"></canvas></div>
 <main>
   <header class="top rv" style="--i:0">
-    <h1 class="brand" aria-label="ERROR HUB DOWNLODER"><span class="dev">ERROR HUB</span><span class="ang">DOWNLODER</span></h1>
+    <h1 class="brand" aria-label="ERROR HUB DOWNLODER"><span class="dev" data-t="ERROR HUB">ERROR HUB</span><span class="ang">DOWNLODER</span></h1>
   <div class="social">
     <a class="discord" href="https://discord.gg/ugwfaHSH3" target="_blank" rel="noopener noreferrer" aria-label="Join our Discord server">
       <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
@@ -469,6 +478,52 @@ function mk(init){const o=mk0(init);o.bv=o.vy;return o}
 /* tentacle web: neighbours pull each other, joined by glowing, wavy, colourful lines; every spark leaves a comet tail */
 let T=0;
 const LINK=150,MAXLINK=3;
+let RINGS=[],BOLTS=[],METEORS=[],BOKEH=[];
+const hz=o=>(((hue+o)%360)+360)%360;
+function mkBokeh(init){return{x:Math.random()*W,y:init?Math.random()*H:H+90*D,r:(Math.random()*55+30)*D,v:(Math.random()*.25+.1)*D,o:Math.random()*160-40,a:Math.random()*.06+.035,s:Math.random()*6.28}}
+function addRing(x,y){if(RINGS.length<10)RINGS.push({x:x*D,y:y*D,r:6*D,a:.6,o:Math.random()*80})}
+function addBolts(x,y,n){
+  for(let b=0;b<n&&BOLTS.length<14;b++){
+    const ang=Math.random()*6.283,len=(90+Math.random()*130)*D,seg=8,pts=[[x*D,y*D]];
+    for(let i=1;i<=seg;i++){const t=i/seg,j=(1-t*.4)*16*D;pts.push([x*D+Math.cos(ang)*len*t+(Math.random()-.5)*2*j,y*D+Math.sin(ang)*len*t+(Math.random()-.5)*2*j])}
+    BOLTS.push({pts,life:1,o:Math.random()*90-10});
+  }
+}
+function addMeteor(){if(METEORS.length<2)METEORS.push({x:(Math.random()*.7+.3)*W,y:-30*D,vx:-(5+Math.random()*4)*D,vy:(3+Math.random()*3)*D,o:Math.random()*120-20,life:1})}
+function drawExtras(){
+  /* big soft bokeh orbs drifting up (behind everything) */
+  for(const b of BOKEH){
+    b.y-=b.v;b.s+=.004;b.x+=Math.sin(b.s)*.25*D;if(b.y<-b.r*1.5)Object.assign(b,mkBokeh(false));
+    const g=cx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r),h=hz(b.o);
+    g.addColorStop(0,'hsla('+h+',80%,62%,'+b.a+')');g.addColorStop(1,'hsla('+h+',80%,62%,0)');
+    cx.fillStyle=g;cx.beginPath();cx.arc(b.x,b.y,b.r,0,6.283);cx.fill();
+  }
+  /* shooting stars */
+  if(Math.random()<.004)addMeteor();
+  for(let i=METEORS.length-1;i>=0;i--){
+    const m=METEORS[i];m.x+=m.vx;m.y+=m.vy;
+    if(m.y>H+40*D||m.x<-60*D){METEORS.splice(i,1);continue}
+    const L=150*D,sp=Math.hypot(m.vx,m.vy),tx=m.x-m.vx/sp*L,ty=m.y-m.vy/sp*L,h=hz(m.o);
+    const g=cx.createLinearGradient(m.x,m.y,tx,ty);g.addColorStop(0,'hsla('+h+',90%,82%,.85)');g.addColorStop(1,'hsla('+h+',90%,60%,0)');
+    cx.strokeStyle=g;cx.lineWidth=2.2*D;cx.beginPath();cx.moveTo(m.x,m.y);cx.lineTo(tx,ty);cx.stroke();
+    glow(m.x,m.y,2.2*D,h,.9,false);
+  }
+  /* shockwave rings from a tap */
+  for(let i=RINGS.length-1;i>=0;i--){
+    const r=RINGS[i];r.r+=7*D;r.a*=.94;if(r.a<.02){RINGS.splice(i,1);continue}
+    const h=hz(r.o);
+    cx.strokeStyle='hsla('+h+',90%,70%,'+r.a*.35+')';cx.lineWidth=7*D;cx.beginPath();cx.arc(r.x,r.y,r.r,0,6.283);cx.stroke();
+    cx.strokeStyle='hsla('+h+',95%,78%,'+r.a+')';cx.lineWidth=1.6*D;cx.beginPath();cx.arc(r.x,r.y,r.r,0,6.283);cx.stroke();
+  }
+  /* little lightning bolts from a tap */
+  for(let i=BOLTS.length-1;i>=0;i--){
+    const b=BOLTS[i];b.life-=.07;if(b.life<=0){BOLTS.splice(i,1);continue}
+    const h=hz(b.o),fl=b.life*(.6+.4*Math.random());
+    cx.beginPath();cx.moveTo(b.pts[0][0],b.pts[0][1]);for(let k=1;k<b.pts.length;k++)cx.lineTo(b.pts[k][0],b.pts[k][1]);
+    cx.lineJoin='round';cx.strokeStyle='hsla('+h+',90%,62%,'+fl*.3+')';cx.lineWidth=6*D;cx.stroke();
+    cx.strokeStyle='hsla('+h+',95%,85%,'+fl+')';cx.lineWidth=1.4*D;cx.stroke();
+  }
+}
 function glow(x,y,r,h,a,star){
   cx.fillStyle='hsla('+h+',80%,58%,'+(a*.2)+')';cx.beginPath();cx.arc(x,y,r*3.2,0,6.283);cx.fill();
   cx.fillStyle='hsla('+h+',85%,70%,'+a+')';cx.beginPath();cx.arc(x,y,r,0,6.283);cx.fill();
@@ -484,6 +539,7 @@ function tail(p,h,a){
 }
 function frame(){
   cx.clearRect(0,0,W,H);cx.globalCompositeOperation='lighter';T++;
+  drawExtras();
   const R=LINK*D,R2=R*R;
   /* 1) move */
   for(let i=P.length-1;i>=0;i--){
@@ -537,12 +593,12 @@ function burst(x,y,n){
   }
 }
 let lastB=0;
-addEventListener('pointerdown',e=>burst(e.clientX,e.clientY,28),{passive:true});
+addEventListener('pointerdown',e=>{if(!raf)return;burst(e.clientX,e.clientY,28);addRing(e.clientX,e.clientY);addBolts(e.clientX,e.clientY,4)},{passive:true});
 addEventListener('pointermove',e=>{
   const t=performance.now();if(t-lastB<30)return;lastB=t;
   burst(e.clientX,e.clientY,e.pointerType==='mouse'&&!e.buttons?2:6); /* finger/mouse drag leaves a bright trail */
 },{passive:true});
-function startFx(){stopFx();size();const n=Math.round(Math.min(120,Math.max(55,innerWidth/11)));P=Array.from({length:n},()=>mk(true));frame()}
+function startFx(){stopFx();size();const n=Math.round(Math.min(120,Math.max(55,innerWidth/11)));P=Array.from({length:n},()=>mk(true));RINGS=[];BOLTS=[];METEORS=[];BOKEH=Array.from({length:innerWidth<600?5:8},()=>mkBokeh(true));frame()}
 function stopFx(){cancelAnimationFrame(raf);raf=0;cx.clearRect(0,0,W,H)}
 addEventListener('resize',()=>{if(raf)startFx()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0}else if($('emb').checked&&!raf)startFx()});
