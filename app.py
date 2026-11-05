@@ -32,9 +32,9 @@ COOKIES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt"
 CACHE = "/tmp/vcache"
 os.makedirs(CACHE, exist_ok=True)
 
-# Sites that are not allowed. Nothing is blocked by default now (YouTube, Facebook, Instagram, TikTok, X all work).
-# To block some, use the BLOCKED_SITES setting, e.g. youtube.com,youtu.be  (comma separated).
-_default_block = "none"
+# Sites that are not allowed: YouTube. Facebook, Instagram, TikTok and X work.
+# Change with the BLOCKED_SITES setting (comma separated, "none" = block nothing).
+_default_block = "youtube.com,youtu.be,youtube-nocookie.com"
 _raw_block = os.environ.get("BLOCKED_SITES", _default_block).strip().lower()
 BLOCKED = tuple(d.strip() for d in _raw_block.split(",") if d.strip() and d.strip() != "none")
 BLOCKED_EXTRACTORS = tuple(sorted({d.split(".")[0] for d in BLOCKED})) or ("\0",)

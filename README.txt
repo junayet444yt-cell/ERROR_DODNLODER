@@ -4,7 +4,7 @@ ERROR HUB DOWNLODER - public-ready version
 WHAT IT DOES
 Paste a video link -> the video appears and plays -> Download button saves it.
 Works with most sites (TikTok, Twitter/X (x.com and twitter.com links), embed players, direct .mp4/.m3u8 links ...).
-Instagram videos/reels work (add cookies, see below). YouTube, Facebook, Instagram, TikTok and X all work (BLOCKED_SITES can block some). YouTube on Render often needs cookies or a proxy.
+Instagram videos/reels work (add cookies, see below). Facebook, Instagram, TikTok and X work. YouTube is not supported (blocked by BLOCKED_SITES).
 Gear button (bottom right) > "Add background video" plays a video from your own device behind the page (not uploaded anywhere).
 Background: gear button (bottom right) = blur slider, darkness and floating embers.
 
@@ -59,3 +59,6 @@ For x.com / twitter.com links the app first asks FxTwitter, then VxTwitter (no l
 
 YOUTUBE / FACEBOOK
 Both are allowed now. YouTube needs a JavaScript runtime (the "deno" package in requirements.txt). YouTube often refuses data-centre servers like Render ("confirm you are not a bot"): then add your cookies (COOKIES_B64) or a proxy (PROXY_URL), or run the app on your own PC/home internet. Facebook: public videos work, private ones need cookies. In Render > Environment, delete BLOCKED_SITES if it is still set there.
+
+YOUTUBE IS OFF
+YouTube links are blocked again (BLOCKED_SITES = youtube.com,youtu.be,youtube-nocookie.com). In Render > Environment make sure BLOCKED_SITES is not set to "none".

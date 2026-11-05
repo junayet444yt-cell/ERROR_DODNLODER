@@ -230,7 +230,7 @@ img,a,svg{-webkit-user-drag:none;user-drag:none}
     </div>
     <button class="go" id="go">Get Video</button>
   </div>
-  <p class="hint">YouTube, Facebook, Instagram, TikTok, Twitter and 18+ content download</p>
+  <p class="hint">Facebook, Instagram, TikTok, Twitter and 18+ content download</p>
   <p class="hint hint2">18+ content · limited website video download</p>
   <button class="pbtn main" id="install" type="button" style="display:none;flex:none;margin-top:12px;padding:11px 18px;font-size:18px">📲 Install as App</button>
   <input id="file" type="file" accept="video/*,.mkv,.mov,.m4v,.3gp" hidden>
@@ -248,6 +248,7 @@ img,a,svg{-webkit-user-drag:none;user-drag:none}
     </div>
   </section>
   <p class="note rv" style="--i:4"><span id="rule">Only download videos you own or have permission to save.</span> Videos are deleted from the server after a short time.<span id="contact"></span></p>
+  <p class="note rv" style="--i:5">YouTube videos are not supported.<br>18+ limited website access.</p>
 </main>
 
 <button id="gear" aria-label="Background settings" aria-expanded="false">⚙</button>
@@ -384,7 +385,7 @@ async function login(){
 $('lgo').onclick=login; $('pw').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 fetch('/api/status').then(r=>r.json()).then(s=>{
   if(s.need&&!s.ok)$('lock').style.display='grid';
-  if(s.blocked&&s.blocked.length)$('rule').textContent+=' '+s.blocked.join(', ')+' links are not supported.';
+  
   if(s.contact){const a=document.createElement('a');a.href='mailto:'+s.contact;a.textContent=s.contact;$('contact').append(' Contact / removal requests: ',a)}
 }).catch(()=>{});
 
